@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppState } from "../app/AppContext";
 import type { CategoryId } from "../domain/scoringCategories";
 import {
   BASE_CATEGORIES,
@@ -7,135 +8,113 @@ import {
   AMERICAS_CATEGORIES,
   CATEGORY_LABELS,
 } from "../domain/scoringCategories";
-import { useAppState } from "../app/AppContext";
 
 export default function ScoringPage() {
   const { draftGame, setDraftGame } = useAppState();
   const navigate = useNavigate();
 
-  // --- Handle case where no draft exists ---
   if (!draftGame) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "2rem 1rem",
-          textAlign: "center",
-        }}
-      >
-        <h2>No game draft found</h2>
-        <p>Please start a new game first.</p>
-        <button
-          onClick={() => navigate("/")}
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem 1.5rem",
-            backgroundColor: "#4a7c59",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-        >
-          Go to New Game
-        </button>
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        <h2>No active game</h2>
+        <button onClick={() => navigate("/new-game")}>Back to New Game</button>
       </div>
     );
   }
 
-  // --- Build categories dynamically based on expansions ---
+  // Build category list based on expansions
   const categories: CategoryId[] = [...BASE_CATEGORIES];
   if (draftGame.expansions.includes("oceania")) categories.push(...OCEANIA_CATEGORIES);
   if (draftGame.expansions.includes("americas")) categories.push(...AMERICAS_CATEGORIES);
 
-  // --- Local state for scores ---
-  const [scores, setScores] = useState<{ [playerId: string]: { [category in CategoryId]?: number } }>(
-    draftGame.scores || {}
-  );
+  const [categoryIndex, setCategoryIndex] = useState(0);
+  const [playerIndex, setPlayerIndex] = useState(0);
 
-  // --- Sync local scores with draft in AppContext ---
-  useEffect(() => {
-    setDraftGame({ ...draftGame, scores });
-  }, [scores]);
+  const currentCategory = categories[categoryIndex];
+  const currentPlayer = draftGame.players[playerIndex];
 
-  // --- Update score for a player/category ---
-  const handleScoreChange = (playerId: string, category: CategoryId, value: string) => {
-    const numeric = parseInt(value) || 0;
-    setScores(prev => ({
-      ...prev,
-      [playerId]: {
-        ...prev[playerId],
-        [category]: numeric,
+  const currentScore =
+    draftGame.scores[currentPlayer.id]?.[currentCategory] ?? "";
+
+  const updateScore = (value: number) => {
+    const updatedDraft = {
+      ...draftGame,
+      scores: {
+        ...draftGame.scores,
+        [currentPlayer.id]: {
+          ...draftGame.scores[currentPlayer.id],
+          [currentCategory]: value,
+        },
       },
-    }));
+    };
+
+    setDraftGame(updatedDraft);
+  };
+
+  const goNext = () => {
+    if (playerIndex < draftGame.players.length - 1) {
+      setPlayerIndex(playerIndex + 1);
+    } else if (categoryIndex < categories.length - 1) {
+      setPlayerIndex(0);
+      setCategoryIndex(categoryIndex + 1);
+    } else {
+      navigate("/results");
+    }
   };
 
   return (
     <div
       style={{
-        padding: "2rem",
-        maxWidth: "480px",
-        margin: "0 auto",
+        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        gap: "2rem",
+        justifyContent: "center",
+        padding: "1.5rem",
+        maxWidth: "420px",
+        margin: "0 auto",
+        gap: "1.5rem",
+        textAlign: "center",
       }}
     >
-      <h1 style={{ textAlign: "center" }}>Scoring</h1>
+      <div>
+        <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>
+          {CATEGORY_LABELS[currentCategory]}
+        </div>
+        <h2>{currentPlayer.name}</h2>
+      </div>
 
-      {draftGame.players.map(player => (
-        <section
-          key={player.id}
-          style={{
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            padding: "1rem",
-          }}
-        >
-          <h2>{player.name}</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {categories.map(category => (
-              <label
-                key={category}
-                style={{ display: "flex", justifyContent: "space-between" }}
-              >
-                <span>{CATEGORY_LABELS[category]}</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={scores[player.id]?.[category] ?? ""}
-                  onChange={e => handleScoreChange(player.id, category, e.target.value)}
-                  style={{
-                    width: "4rem",
-                    textAlign: "right",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                    padding: "0.25rem",
-                  }}
-                />
-              </label>
-            ))}
-          </div>
-        </section>
-      ))}
+      <input
+        type="number"
+        min={0}
+        value={currentScore}
+        onChange={e => updateScore(parseInt(e.target.value) || 0)}
+        style={{
+          fontSize: "2rem",
+          textAlign: "center",
+          padding: "0.75rem",
+          borderRadius: "8px",
+          border: "1px solid #ccc",
+        }}
+      />
 
       <button
-        onClick={() => navigate("/results")}
+        onClick={goNext}
         style={{
-          padding: "0.75rem 1.5rem",
+          padding: "0.75rem",
+          fontSize: "1rem",
           backgroundColor: "#4a7c59",
           color: "white",
           border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
+          borderRadius: "8px",
         }}
       >
-        Finish & View Results
+        Next
       </button>
+
+      <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
+        Player {playerIndex + 1} of {draftGame.players.length} · Category{" "}
+        {categoryIndex + 1} of {categories.length}
+      </div>
     </div>
   );
 }

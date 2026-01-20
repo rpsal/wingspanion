@@ -16,6 +16,19 @@ export type CategoryId =
   | typeof OCEANIA_CATEGORIES[number]
   | typeof AMERICAS_CATEGORIES[number];
 
+export const SCORING_CATEGORIES: CategoryId[] = [
+  "bird_scores",
+  "bonus_cards",
+  "end_of_round_goals",
+  "eggs",
+  "cached_food",
+  "tucked_cards",
+  "nectar_forest",
+  "nectar_grassland",
+  "nectar_wetland",
+  "hummingbird_scores",
+];
+
 export const CATEGORY_LABELS: Record<CategoryId, string> = {
   bird_scores: "Bird Scores",
   bonus_cards: "Bonus Cards",

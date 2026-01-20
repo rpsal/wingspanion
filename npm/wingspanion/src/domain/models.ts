@@ -1,3 +1,5 @@
+import type { CategoryId } from "./scoringCategories";
+
 export type ExpansionId =
   | "base"
   | "europe"
@@ -6,10 +8,16 @@ export type ExpansionId =
   | "americas"
   | "fanPack1";
 
+// Player and App Models
+
 export type PlayerProfile = {
   id: string;
   name: string;
   color?: string;
+};
+
+export type AppSettings = {
+  // reserved for future settings
 };
 
 export type PlayerSnapshot = {
@@ -17,6 +25,22 @@ export type PlayerSnapshot = {
   name: string;
   color?: string;
 };
+
+// Scoring Models
+
+export type RoundPlacement = 1 | 2 | 3 | 4 | 0;
+
+export type EndOfRoundScores = {
+  rounds: RoundPlacement[];
+};
+
+export type ScoreValue = number | EndOfRoundScores;
+
+export type PlayerScores = {
+  [categoryId in CategoryId]?: ScoreValue;
+};
+
+// Game Models
 
 export type InProgressGame = {
   id: string;
@@ -40,4 +64,7 @@ export type Game = {
   schemaVersion: number;
 };
 
-export type AppSettings = Record<string, unknown>;
+
+export type CompletedGame = InProgressGame & {
+  endedAt: number;
+};
