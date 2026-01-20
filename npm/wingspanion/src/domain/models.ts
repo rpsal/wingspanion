@@ -3,7 +3,8 @@ export type ExpansionId =
   | "europe"
   | "oceania"
   | "asia"
-  | "americas";
+  | "americas"
+  | "fanPack1";
 
 export type PlayerProfile = {
   id: string;

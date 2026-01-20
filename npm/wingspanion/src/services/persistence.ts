@@ -48,9 +48,7 @@ const dbPromise = openDB<WingspanDB>(DB_NAME, DB_VERSION, {
   },
 });
 
-/* =====================
-   Draft Game
-===================== */
+// Draft Game
 
 const DRAFT_KEY = "current";
 
@@ -67,4 +65,21 @@ export async function saveDraftGame(game: InProgressGame): Promise<void> {
 export async function deleteDraftGame(): Promise<void> {
   const db = await dbPromise;
   await db.delete("drafts", DRAFT_KEY);
+}
+
+// Player Management
+
+export async function getPlayers(): Promise<PlayerProfile[]> {
+  const db = await dbPromise;
+  return (await db.getAll("players")) ?? [];
+}
+
+export async function savePlayer(player: PlayerProfile): Promise<void> {
+  const db = await dbPromise;
+  await db.put("players", player, player.id);
+}
+
+export async function deletePlayer(playerId: string): Promise<void> {
+  const db = await dbPromise;
+  await db.delete("players", playerId);
 }

@@ -1,28 +1,25 @@
-import { useAppState } from "../app/AppContext";
+import { Link } from "react-router-dom";
 
 export default function HomePage() {
-  const { draftGame, setDraftGame } = useAppState();
-
   return (
-    <div>
-      <h1>Home</h1>
-      <pre>{JSON.stringify(draftGame, null, 2)}</pre>
-      <button
-        onClick={() =>
-          setDraftGame({
-            id: "test",
-            players: [],
-            expansions: ["base"],
-            startedAt: Date.now(),
-            scores: {},
-            currentCategoryId: "birds",
-            schemaVersion: 1,
-          })
-        }
-      >
-        Create Draft
-      </button>
-      <button onClick={() => setDraftGame(null)}>Clear Draft</button>
+    <div style={{ padding: "2rem", textAlign: "center" }}>
+      <h1>Wingspanion</h1>
+      <Link to="/new-game">
+        <button
+          style={{
+            padding: "1rem 2rem",
+            fontSize: "1.2rem",
+            backgroundColor: "#4a7c59",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            marginTop: "1rem",
+          }}
+        >
+          Start New Game
+        </button>
+      </Link>
     </div>
   );
 }

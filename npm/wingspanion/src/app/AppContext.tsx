@@ -3,8 +3,7 @@ import type { ReactNode } from "react";
 
 import type { InProgressGame, PlayerProfile, AppSettings } from "../domain/models";
 
-import { loadDraftGame } from "../services/persistence";
-import { saveDraftGame, deleteDraftGame } from "../services/persistence";
+import { loadDraftGame, saveDraftGame, deleteDraftGame } from "../services/persistence";
 
 type AppState = {
   players: PlayerProfile[];
@@ -12,33 +11,42 @@ type AppState = {
   draftGame: InProgressGame | null;
 
   setDraftGame: (game: InProgressGame | null) => void;
+  setPlayers: (players: PlayerProfile[]) => void;
 };
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [players] = useState<PlayerProfile[]>([]);
+  // Players state
+  const [players, _setPlayers] = useState<PlayerProfile[]>([]);
+  const setPlayers = (newPlayers: PlayerProfile[]) => {
+    _setPlayers(newPlayers);
+  };
+
+  // Settings state
   const [settings] = useState<AppSettings>({});
-  
+
+  // Draft game state
   const [draftGame, _setDraftGame] = useState<InProgressGame | null>(null);
 
   const setDraftGame = async (game: InProgressGame | null) => {
-	if (game) {
-		await saveDraftGame(game);
-		_setDraftGame(game);
-	  } else {
-		await deleteDraftGame();
-		_setDraftGame(null);
-	  }
-	};
+    if (game) {
+      await saveDraftGame(game);
+      _setDraftGame(game);
+    } else {
+      await deleteDraftGame();
+      _setDraftGame(null);
+    }
+  };
 
+  // Initialization flag
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     async function init() {
       const draft = await loadDraftGame();
       if (draft) {
-        setDraftGame(draft);
+        _setDraftGame(draft);
       }
       setInitialized(true);
     }
@@ -56,6 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         settings,
         draftGame,
         setDraftGame,
+        setPlayers,
       }}
     >
       {children}
@@ -63,7 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAppState() {
+export function useAppState(): AppState {
   const ctx = useContext(AppContext);
   if (!ctx) {
     throw new Error("useAppState must be used within AppProvider");
