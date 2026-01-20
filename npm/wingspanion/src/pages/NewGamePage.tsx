@@ -30,16 +30,9 @@ export default function NewGamePage() {
   };
 
   // Start a new draft game
-  const startGame = () => {
-    if (selectedPlayers.length === 0) {
-      alert("Select at least one player to start the game.");
-      return;
-    }
-
-    if (!selectedExpansions.includes("base") && !selectedExpansions.includes("asia")) {
-      alert("You must select at least the Base Game or the Asia Expansion to start.");
-      return;
-    }
+  const startGame = async () => {
+    if (selectedPlayers.length === 0) return;
+    if (!selectedExpansions.includes("base") && !selectedExpansions.includes("asia")) return;
 
     const newDraft: InProgressGame = {
       id: `game-${Date.now()}`,
@@ -51,7 +44,7 @@ export default function NewGamePage() {
       schemaVersion: 1,
     };
 
-    setDraftGame(newDraft);
+    await setDraftGame(newDraft);
     navigate("/score");
   };
 
