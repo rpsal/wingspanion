@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <!-- Required for iPhone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>Wingspanion</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/wingspanion/manifest.json">
+  <link rel="apple-touch-icon" href="/wingspanion/icon-192.png">
+
+  <!-- iOS-specific -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f4f4f4;
+    }
+
+    .card {
+      max-width: 420px;
+      margin: auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Hello World</h1>
+    <p>This is a PWA hosted on GitHub Pages.</p>
+    <p id="sw-status">Service Worker: not registered</p>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/wingspanion/service-worker.js')
+        .then(() => {
+          document.getElementById('sw-status').textContent =
+            'Service Worker: registered';
+        })
+        .catch(err => {
+          document.getElementById('sw-status').textContent =
+            'Service Worker: error';
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "Wingspanion",
+  "short_name": "Wingspanion",
+  "start_url": "/wingspanion/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/wingspanion/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
