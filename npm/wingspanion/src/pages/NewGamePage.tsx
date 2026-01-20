@@ -1,5 +1,5 @@
 import { useState } from "react";
-//import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import type { PlayerProfile, ExpansionId, InProgressGame } from "../domain/models";
 import { useAppState } from "../app/AppContext";
 import PlayerSelector from "../components/PlayerSelector";
@@ -16,7 +16,7 @@ const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string }[] = [
 
 export default function NewGamePage() {
   const { draftGame, setDraftGame } = useAppState();
-  //const navigate = useNavigate();
+  const navigate = useNavigate();
 
   // State for selected players and expansions
   const [selectedPlayers, setSelectedPlayers] = useState<PlayerProfile[]>(draftGame?.players ?? []);
@@ -52,7 +52,7 @@ export default function NewGamePage() {
     };
 
     setDraftGame(newDraft);
-    //navigate("/scoring");
+    navigate("/score");
   };
 
   // Clear draft
