@@ -62,6 +62,17 @@ export default function ScoringPage() {
     }
   };
 
+  const goBack = () => {
+    if (playerIndex > 0) {
+      setPlayerIndex(playerIndex - 1);
+    } else if (categoryIndex > 0) {
+      setPlayerIndex(draftGame.players.length - 1);
+      setCategoryIndex(categoryIndex - 1);
+    } else {
+      navigate("/new-game");
+    }
+  };
+
   return (
     <div
       style={{
@@ -97,19 +108,44 @@ export default function ScoringPage() {
         }}
       />
 
-      <button
-        onClick={goNext}
+      {/* Buttons container */}
+      <div
         style={{
-          padding: "0.75rem",
-          fontSize: "1rem",
-          backgroundColor: "#4a7c59",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
+          display: "flex",
+          justifyContent: "space-between", // Back left, Next right
+          gap: "1rem",
         }}
       >
-        Next
-      </button>
+        <button
+          onClick={goBack}
+          style={{
+            flex: 1,
+            padding: "0.75rem",
+            fontSize: "1rem",
+            backgroundColor: "#c0392b", // red
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Back
+        </button>
+
+        <button
+          onClick={goNext}
+          style={{
+            flex: 1,
+            padding: "0.75rem",
+            fontSize: "1rem",
+            backgroundColor: "#4a7c59",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+          }}
+        >
+          Next
+        </button>
+      </div>
 
       <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
         Player {playerIndex + 1} of {draftGame.players.length} · Category{" "}
