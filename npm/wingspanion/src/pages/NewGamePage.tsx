@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PlayerProfile, ExpansionId, InProgressGame } from "../domain/models";
 import { useAppState } from "../app/AppContext";
-import PlayerSelector from "../components/PlayerSelector";
 
 // Define available expansions
 const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string }[] = [
@@ -15,7 +14,7 @@ const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string }[] = [
 ];
 
 export default function NewGamePage() {
-  const { draftGame, setDraftGame } = useAppState();
+  const { players, draftGame, setDraftGame } = useAppState();
   const navigate = useNavigate();
 
   // State for selected players and expansions
@@ -84,10 +83,40 @@ export default function NewGamePage() {
         <h1 style={{ textAlign: "center" }}>New Game</h1>
 
         {/* Player Selector */}
-        <PlayerSelector
-          selectedPlayers={selectedPlayers}
-          setSelectedPlayers={setSelectedPlayers}
-        />
+        <section>
+          <h2>Select Players</h2>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            {players.map(p => (
+              <label
+                key={p.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.5rem 1rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "6px",
+                  backgroundColor: selectedPlayers.some(sp => sp.id === p.id)
+                    ? "#d0f0d0"
+                    : "white",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedPlayers.some(sp => sp.id === p.id)}
+                  onChange={() =>
+                    setSelectedPlayers(prev =>
+                      prev.some(sp => sp.id === p.id)
+                        ? prev.filter(sp => sp.id !== p.id)
+                        : [...prev, p]
+                    )
+                  }
+                />
+                {p.name}
+              </label>
+            ))}
+          </div>
+        </section>
 
         {/* Expansion Selection */}
         <section>
@@ -120,6 +149,17 @@ export default function NewGamePage() {
 
         {/* Action Buttons */}
         <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>
+          <button
+            onClick={() => navigate("/")}
+            style={{
+              padding: "0.75rem",
+              backgroundColor: "#aaa",
+              border: "none",
+              borderRadius: "6px",
+            }}
+          >
+            Back
+          </button>
           <button
             onClick={startGame}
             disabled={isStartDisabled}

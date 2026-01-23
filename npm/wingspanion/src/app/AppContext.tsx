@@ -2,31 +2,28 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { InProgressGame, PlayerProfile, AppSettings } from "../domain/models";
-
 import { loadDraftGame, saveDraftGame, deleteDraftGame } from "../services/persistence";
 
 type AppState = {
   players: PlayerProfile[];
-  settings: AppSettings;
-  draftGame: InProgressGame | null;
+  setPlayers: React.Dispatch<React.SetStateAction<PlayerProfile[]>>;
 
-  setDraftGame: (game: InProgressGame | null) => void;
-  setPlayers: (players: PlayerProfile[]) => void;
+  settings: AppSettings;
+
+  draftGame: InProgressGame | null;
+  setDraftGame: (game: InProgressGame | null) => Promise<void>;
 };
 
 const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  // Players state
-  const [players, _setPlayers] = useState<PlayerProfile[]>([]);
-  const setPlayers = (newPlayers: PlayerProfile[]) => {
-    _setPlayers(newPlayers);
-  };
+  // Players (global roster)
+  const [players, setPlayers] = useState<PlayerProfile[]>([]);
 
-  // Settings state
+  // Settings (future use)
   const [settings] = useState<AppSettings>({});
 
-  // Draft game state
+  // Draft game
   const [draftGame, _setDraftGame] = useState<InProgressGame | null>(null);
 
   const setDraftGame = async (game: InProgressGame | null) => {
@@ -39,7 +36,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Initialization flag
+  // Initialization gate
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -61,10 +58,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider
       value={{
         players,
+        setPlayers,
         settings,
         draftGame,
         setDraftGame,
-        setPlayers,
       }}
     >
       {children}

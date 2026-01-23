@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import HomePage from "../pages/HomePage";
+import PlayersPage from "../pages/PlayersPage";
 import NewGamePage from "../pages/NewGamePage";
 import ScoringPage from "../pages/ScoringPage";
 import ResultsPage from "../pages/ResultsPage";
@@ -12,6 +13,7 @@ export default function AppRouter() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/players" element={<PlayersPage />} />
         <Route path="/new-game" element={<NewGamePage />} />
         <Route path="/score" element={<ScoringPage />} />
         <Route path="/results" element={<ResultsPage />} />
