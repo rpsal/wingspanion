@@ -1,4 +1,6 @@
 import type { CategoryId } from "./scoringCategories";
+import type { AvatarId } from "../domain/avatars";
+import type { PlayerColorId } from "./colors";
 
 export type ExpansionId =
   | "base"
@@ -13,7 +15,8 @@ export type ExpansionId =
 export type PlayerProfile = {
   id: string;
   name: string;
-  color?: string;
+  colorId: PlayerColorId;
+  avatarId: AvatarId;
 };
 
 export type AppSettings = {

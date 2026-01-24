@@ -69,17 +69,13 @@ export async function deleteDraftGame(): Promise<void> {
 
 // Player Management
 
-export async function getPlayers(): Promise<PlayerProfile[]> {
-  const db = await dbPromise;
-  return (await db.getAll("players")) ?? [];
+const PLAYERS_KEY = "players";
+
+export async function savePlayers(players: PlayerProfile[]) {
+  localStorage.setItem(PLAYERS_KEY, JSON.stringify(players));
 }
 
-export async function savePlayer(player: PlayerProfile): Promise<void> {
-  const db = await dbPromise;
-  await db.put("players", player, player.id);
-}
-
-export async function deletePlayer(playerId: string): Promise<void> {
-  const db = await dbPromise;
-  await db.delete("players", playerId);
+export async function loadPlayers(): Promise<PlayerProfile[]> {
+  const raw = localStorage.getItem(PLAYERS_KEY);
+  return raw ? JSON.parse(raw) : [];
 }

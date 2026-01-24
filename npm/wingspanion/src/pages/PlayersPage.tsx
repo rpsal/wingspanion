@@ -1,113 +1,104 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAppState } from "../app/AppContext";
-import type { PlayerProfile } from "../domain/models";
+import { AVATARS, AVATAR_IDS } from "../domain/avatars";
+import { PLAYER_COLORS } from "../domain/colors";
+import type { PlayerColorId } from "../domain/colors";
+import type { AvatarId } from "../domain/avatars";
+import { ColorPicker } from "../components/ColorPicker";
 
 export default function PlayersPage() {
   const { players, setPlayers } = useAppState();
-  const navigate = useNavigate();
-  const [newName, setNewName] = useState("");
+
+  const [name, setName] = useState("");
+  const [colorId, setColorId] = useState<PlayerColorId>("blue");
+  const [avatarId, setAvatarId] = useState<AvatarId>("bird1");
 
   const addPlayer = () => {
-    if (!newName.trim()) return;
+    if (!name.trim()) return;
 
-    const newPlayer: PlayerProfile = {
-      id: crypto.randomUUID(),
-      name: newName.trim(),
-    };
+    setPlayers([
+      ...players,
+      {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        colorId,
+        avatarId,
+      },
+    ]);
 
-    setPlayers(prev => [...prev, newPlayer]);
-    setNewName("");
+    setName("");
+    setColorId("blue");
+    setAvatarId("bird1");
   };
 
   const removePlayer = (id: string) => {
-    setPlayers(prev => prev.filter(p => p.id !== id));
+    setPlayers(players.filter(p => p.id !== id));
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "2rem 1rem",
-        maxWidth: "480px",
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.5rem",
-      }}
-    >
-      <h1 style={{ textAlign: "center" }}>Players</h1>
+    <div style={{ padding: "2rem", maxWidth: "480px", margin: "0 auto" }}>
+      <h1>Players</h1>
 
       {/* Add player */}
-      <div style={{ display: "flex", gap: "0.5rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
         <input
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
           placeholder="Player name"
-          style={{
-            flex: 1,
-            padding: "0.5rem",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-          }}
+          value={name}
+          onChange={e => setName(e.target.value)}
         />
-        <button
-          onClick={addPlayer}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#4a7c59",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-          }}
+
+        {/* Color picker should emit PlayerColorId */}
+        <ColorPicker
+          value={colorId}
+          onChange={setColorId}
+        />
+
+        <select
+          value={avatarId}
+          onChange={e => setAvatarId(e.target.value as AvatarId)}
         >
-          Add
-        </button>
+          {AVATAR_IDS.map(id => (
+            <option key={id} value={id}>
+              {id}
+            </option>
+          ))}
+        </select>
+
+        <button onClick={addPlayer}>Add</button>
       </div>
 
       {/* Player list */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      <ul style={{ listStyle: "none", padding: 0 }}>
         {players.map(p => (
-          <div
+          <li
             key={p.id}
             style={{
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
-              padding: "0.5rem 0.75rem",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
+              gap: "0.75rem",
+              marginBottom: "0.75rem",
             }}
           >
-            <span>{p.name}</span>
-            <button
-              onClick={() => removePlayer(p.id)}
+            <img
+              src={AVATARS[p.avatarId]}
+              alt={p.name}
+              width={40}
+              height={40}
+              style={{ borderRadius: "50%" }}
+            />
+            <span
               style={{
-                backgroundColor: "#c94c4c",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                padding: "0.25rem 0.5rem",
+                color: PLAYER_COLORS[p.colorId],
+                fontWeight: 600,
+                fontSize: "1.05rem",
               }}
             >
-              Delete
-            </button>
-          </div>
+              {p.name}
+            </span>
+            <button onClick={() => removePlayer(p.id)}>Remove</button>
+          </li>
         ))}
-      </div>
-
-      <button
-        onClick={() => navigate("/")}
-        style={{
-          marginTop: "auto",
-          padding: "0.75rem",
-          backgroundColor: "#aaa",
-          border: "none",
-          borderRadius: "6px",
-        }}
-      >
-        Back
-      </button>
+      </ul>
     </div>
   );
 }

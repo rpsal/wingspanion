@@ -1,37 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { PlayerProfile, ExpansionId, InProgressGame } from "../domain/models";
+import type { ExpansionId, InProgressGame } from "../domain/models";
 import { useAppState } from "../app/AppContext";
+import PlayerSelector from "../components/PlayerSelector";
 
-// Define available expansions
+const MIN_PLAYERS = 2;
+const MAX_PLAYERS = 5;
+
+// Available expansions
 const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string }[] = [
   { id: "base", label: "Base Game (Swift Start Pack)" },
   { id: "europe", label: "European Expansion" },
   { id: "oceania", label: "Oceania Expansion" },
   { id: "asia", label: "Asia Expansion" },
   { id: "americas", label: "Americas Expansion" },
-  { id: "fanPack1", label: "Fan-Designed Bird Cards (2025)" },
+  { id: "fanPack1", label: "Fan-Designed Bird Promo Packs: Set 1" },
 ];
 
 export default function NewGamePage() {
   const { players, draftGame, setDraftGame } = useAppState();
   const navigate = useNavigate();
 
-  // State for selected players and expansions
-  const [selectedPlayers, setSelectedPlayers] = useState<PlayerProfile[]>(draftGame?.players ?? []);
-  const [selectedExpansions, setSelectedExpansions] = useState<ExpansionId[]>(draftGame?.expansions ?? ["base"]);
+  // Selection state (IDs, not objects)
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(
+    draftGame?.players.map(p => p.id) ?? []
+  );
 
-  // Toggle expansion selection
+  const [selectedExpansions, setSelectedExpansions] = useState<ExpansionId[]>(
+    draftGame?.expansions ?? ["base"]
+  );
+
+  // Derived selected players
+  const selectedPlayers = players.filter(p =>
+    selectedPlayerIds.includes(p.id)
+  );
+
+  // Reset local state if draft is cleared elsewhere
+  useEffect(() => {
+    if (!draftGame) {
+      setSelectedPlayerIds([]);
+      setSelectedExpansions(["base"]);
+    }
+  }, [draftGame]);
+
   const toggleExpansion = (expId: ExpansionId) => {
     setSelectedExpansions(prev =>
-      prev.includes(expId) ? prev.filter(e => e !== expId) : [...prev, expId]
+      prev.includes(expId)
+        ? prev.filter(e => e !== expId)
+        : [...prev, expId]
     );
   };
 
-  // Start a new draft game
   const startGame = async () => {
     if (selectedPlayers.length === 0) return;
-    if (!selectedExpansions.includes("base") && !selectedExpansions.includes("asia")) return;
+    if (
+      !selectedExpansions.includes("base") &&
+      !selectedExpansions.includes("asia")
+    )
+      return;
 
     const newDraft: InProgressGame = {
       id: `game-${Date.now()}`,
@@ -47,16 +73,17 @@ export default function NewGamePage() {
     navigate("/score");
   };
 
-  // Clear draft
-  const clearDraft = () => {
-    setDraftGame(null);
-    setSelectedPlayers([]);
+  const clearDraft = async () => {
+    await setDraftGame(null);
+    setSelectedPlayerIds([]);
     setSelectedExpansions(["base"]);
   };
 
   const isStartDisabled =
-  selectedPlayers.length === 0 ||
-  (!selectedExpansions.includes("base") && !selectedExpansions.includes("asia"));
+    selectedPlayers.length < MIN_PLAYERS ||
+    selectedPlayers.length > MAX_PLAYERS ||
+    (!selectedExpansions.includes("base") &&
+      !selectedExpansions.includes("asia"));
 
   return (
     <div
@@ -65,16 +92,14 @@ export default function NewGamePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
         padding: "2rem 1rem",
-        boxSizing: "border-box",
         backgroundColor: "#fafafa",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "480px", // mobile-friendly max width
+          maxWidth: "480px",
           display: "flex",
           flexDirection: "column",
           gap: "2rem",
@@ -82,45 +107,20 @@ export default function NewGamePage() {
       >
         <h1 style={{ textAlign: "center" }}>New Game</h1>
 
-        {/* Player Selector */}
-        <section>
-          <h2>Select Players</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-            {players.map(p => (
-              <label
-                key={p.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  padding: "0.5rem 1rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "6px",
-                  backgroundColor: selectedPlayers.some(sp => sp.id === p.id)
-                    ? "#d0f0d0"
-                    : "white",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedPlayers.some(sp => sp.id === p.id)}
-                  onChange={() =>
-                    setSelectedPlayers(prev =>
-                      prev.some(sp => sp.id === p.id)
-                        ? prev.filter(sp => sp.id !== p.id)
-                        : [...prev, p]
-                    )
-                  }
-                />
-                {p.name}
-              </label>
-            ))}
+        <PlayerSelector
+          players={players}
+          selectedPlayerIds={selectedPlayerIds}
+          setSelectedPlayerIds={setSelectedPlayerIds}
+        />
+        {selectedPlayers.length < 2 && (
+          <div style={{ fontSize: "0.85rem", color: "#c0392b" }}>
+            Select 2–5 players to start
           </div>
-        </section>
+        )}
 
-        {/* Expansion Selection */}
         <section>
           <h2 style={{ marginBottom: "1rem" }}>Select Expansions</h2>
+
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
             {AVAILABLE_EXPANSIONS.map(exp => (
               <label
@@ -132,7 +132,9 @@ export default function NewGamePage() {
                   borderRadius: "6px",
                   padding: "0.5rem 1rem",
                   cursor: "pointer",
-                  backgroundColor: selectedExpansions.includes(exp.id) ? "#d0f0d0" : "white",
+                  backgroundColor: selectedExpansions.includes(exp.id)
+                    ? "#d0f0d0"
+                    : "white",
                 }}
               >
                 <input

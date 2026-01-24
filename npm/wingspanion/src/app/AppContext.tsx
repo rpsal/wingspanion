@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import type { InProgressGame, PlayerProfile, AppSettings } from "../domain/models";
 import { loadDraftGame, saveDraftGame, deleteDraftGame } from "../services/persistence";
+import { loadPlayers, savePlayers } from "../services/persistence";
 
 type AppState = {
   players: PlayerProfile[];
@@ -18,7 +19,15 @@ const AppContext = createContext<AppState | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   // Players (global roster)
-  const [players, setPlayers] = useState<PlayerProfile[]>([]);
+  const [players, _setPlayers] = useState<PlayerProfile[]>([]);
+
+  const setPlayers: React.Dispatch<React.SetStateAction<PlayerProfile[]>> = updater => {
+    _setPlayers(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      savePlayers(next);
+      return next;
+    });
+  };
 
   // Settings (future use)
   const [settings] = useState<AppSettings>({});
@@ -41,10 +50,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function init() {
-      const draft = await loadDraftGame();
-      if (draft) {
-        _setDraftGame(draft);
-      }
+      const [draft, loadedPlayers] = await Promise.all([
+        loadDraftGame(),
+        loadPlayers(),
+      ]);
+
+      if (draft) _setDraftGame(draft);
+      _setPlayers(loadedPlayers);
+
       setInitialized(true);
     }
     init();
