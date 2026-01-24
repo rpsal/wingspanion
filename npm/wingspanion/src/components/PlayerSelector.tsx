@@ -76,6 +76,12 @@ export default function PlayerSelector({
 
   const colorEditingDisabled = Boolean(draftGame);
 
+  const selectedPlayers = players.filter(p =>
+    selectedPlayerIds.includes(p.id)
+  );
+
+  const usedColorIds = new Set(selectedPlayers.map(p => p.colorId));
+
   return (
     <section>
       <h2 style={{ textAlign: "center" }}>Select Players</h2>
@@ -85,6 +91,7 @@ export default function PlayerSelector({
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
           gap: "0.75rem",
+          alignItems: "center",
         }}
       >
         {players.map(player => {
@@ -117,6 +124,7 @@ export default function PlayerSelector({
                 <ColorPicker
                   value={player.colorId}
                   disabled={colorEditingDisabled}
+                  usedColorIds={usedColorIds}
                   onChange={(colorId: PlayerColorId) =>
                     updatePlayerColor(player.id, colorId)
                   }

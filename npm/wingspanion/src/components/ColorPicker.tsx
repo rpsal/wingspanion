@@ -1,20 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { PLAYER_COLORS } from "../domain/colors";
+import { PLAYER_COLOR_IDS, PLAYER_COLORS } from "../domain/colors";
 import type { PlayerColorId } from "../domain/colors";
-
-const COLOR_IDS: PlayerColorId[] = [
-  "blue",
-  "red",
-  "green",
-  "yellow",
-  "purple",
-  "black",
-  "white",
-];
 
 interface ColorPickerProps {
   value: PlayerColorId;
   disabled?: boolean;
+  usedColorIds?: Set<PlayerColorId>;
   onChange: (colorId: PlayerColorId) => void;
 }
 
@@ -22,6 +13,7 @@ export function ColorPicker({
   value,
   onChange,
   disabled = false,
+  usedColorIds,
 }: ColorPickerProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -41,6 +33,10 @@ export function ColorPicker({
   useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
+
+  const availableColors = PLAYER_COLOR_IDS.filter(
+    id => !usedColorIds?.has(id) || id === value
+  );
 
   return (
     <div ref={ref} style={{ position: "relative" }}>
@@ -77,7 +73,7 @@ export function ColorPicker({
             zIndex: 10,
           }}
         >
-          {COLOR_IDS.map((id) => (
+          {availableColors.map(id => (
             <button
               key={id}
               onClick={() => {
@@ -89,8 +85,7 @@ export function ColorPicker({
                 height: "24px",
                 borderRadius: "50%",
                 backgroundColor: PLAYER_COLORS[id],
-                border:
-                  value === id ? "2px solid #333" : "1px solid #ccc",
+                border: value === id ? "2px solid #333" : "1px solid #ccc",
                 cursor: "pointer",
               }}
               disabled={disabled}

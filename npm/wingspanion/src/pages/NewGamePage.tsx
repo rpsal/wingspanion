@@ -7,14 +7,16 @@ import PlayerSelector from "../components/PlayerSelector";
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 5;
 
+const BASE = import.meta.env.BASE_URL;
+
 // Available expansions
 const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string; image: string }[] = [
-  { id: "base", label: "Base Game", image: "/expansions/base.png" },
-  { id: "europe", label: "European Expansion", image: "/expansions/europe.png" },
-  { id: "oceania", label: "Oceania Expansion", image: "/expansions/oceania.png" },
-  { id: "asia", label: "Asia Expansion", image: "/expansions/asia.png" },
-  { id: "americas", label: "Americas Expansion", image: "/expansions/americas.png" },
-  { id: "fanPack1", label: "Fan Pack 1", image: "/expansions/fanPack1.png" },
+  { id: "base", label: "Base Game", image: `${BASE}/expansions/base.png` },
+  { id: "europe", label: "Europe", image: `${BASE}/expansions/europe.png`},
+  { id: "oceania", label: "Oceania", image: `${BASE}/expansions/oceania.png` },
+  { id: "asia", label: "Asia", image: `${BASE}/expansions/asia.png` },
+  { id: "americas", label: "Americas", image: `${BASE}/expansions/americas.png` },
+  { id: "fanPack1", label: "Fan Pack 1", image: `${BASE}/expansions/fanPack1.png` },
 ];
 
 export default function NewGamePage() {

@@ -1,3 +1,5 @@
+const BASE = import.meta.env.BASE_URL;
+
 export type AvatarId =
   | "bird1"
   | "bird2"
@@ -14,9 +16,9 @@ export const AVATAR_IDS: AvatarId[] = [
 ];
 
 export const AVATARS: Record<AvatarId, string> = {
-  bird1: "/avatars/bird.png",
-  bird2: "/avatars/bird.png",
-  bird3: "/avatars/bird.png",
-  bird4: "/avatars/bird.png",
-  bird5: "/avatars/bird.png",
+  bird1: `${BASE}avatars/bird.png`,
+  bird2: `${BASE}avatars/bird.png`,
+  bird3: `${BASE}avatars/bird.png`,
+  bird4: `${BASE}avatars/bird.png`,
+  bird5: `${BASE}avatars/bird.png`,
 };
