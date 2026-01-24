@@ -78,7 +78,7 @@ export default function PlayerSelector({
 
   return (
     <section>
-      <h2>Select Players</h2>
+      <h2 style={{ textAlign: "center" }}>Select Players</h2>
 
       <div
         style={{

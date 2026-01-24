@@ -8,13 +8,13 @@ const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 5;
 
 // Available expansions
-const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string }[] = [
-  { id: "base", label: "Base Game (Swift Start Pack)" },
-  { id: "europe", label: "European Expansion" },
-  { id: "oceania", label: "Oceania Expansion" },
-  { id: "asia", label: "Asia Expansion" },
-  { id: "americas", label: "Americas Expansion" },
-  { id: "fanPack1", label: "Fan-Designed Bird Promo Packs: Set 1" },
+const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string; image: string }[] = [
+  { id: "base", label: "Base Game", image: "/expansions/base.png" },
+  { id: "europe", label: "European Expansion", image: "/expansions/europe.png" },
+  { id: "oceania", label: "Oceania Expansion", image: "/expansions/oceania.png" },
+  { id: "asia", label: "Asia Expansion", image: "/expansions/asia.png" },
+  { id: "americas", label: "Americas Expansion", image: "/expansions/americas.png" },
+  { id: "fanPack1", label: "Fan Pack 1", image: "/expansions/fanPack1.png" },
 ];
 
 export default function NewGamePage() {
@@ -112,45 +112,70 @@ export default function NewGamePage() {
           selectedPlayerIds={selectedPlayerIds}
           setSelectedPlayerIds={setSelectedPlayerIds}
         />
+
         {selectedPlayers.length < 2 && (
-          <div style={{ fontSize: "0.85rem", color: "#c0392b" }}>
+          <div style={{ fontSize: "0.85rem", color: "#c0392b", textAlign: "center" }}>
             Select 2–5 players to start
           </div>
         )}
-
-        <section>
-          <h2 style={{ marginBottom: "1rem" }}>Select Expansions</h2>
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-            {AVAILABLE_EXPANSIONS.map(exp => (
-              <label
-                key={exp.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  border: "1px solid #ccc",
-                  borderRadius: "6px",
-                  padding: "0.5rem 1rem",
-                  cursor: "pointer",
-                  backgroundColor: selectedExpansions.includes(exp.id)
-                    ? "#d0f0d0"
-                    : "white",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedExpansions.includes(exp.id)}
-                  onChange={() => toggleExpansion(exp.id)}
-                  style={{ marginRight: "0.5rem" }}
-                />
-                {exp.label}
-              </label>
-            ))}
+        
+        <section style={{ textAlign: "center" }}>
+          <h2>Select Expansions</h2>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "0.5rem",
+            }}
+          >
+            {AVAILABLE_EXPANSIONS.map(exp => {
+              const selected = selectedExpansions.includes(exp.id);
+              return (
+                <div
+                  key={exp.id}
+                  onClick={() => toggleExpansion(exp.id)}
+                  style={{
+                    width: "100px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    border: selected ? "2px solid #4a7c59" : "1px solid #ccc",
+                    borderRadius: "8px",
+                    padding: "0.25rem",
+                    cursor: "pointer",
+                    backgroundColor: selected ? "#e0f8e0" : "white",
+                  }}
+                >
+                  <img
+                    src={exp.image}
+                    alt={exp.label}
+                    style={{
+                      width: "80px",
+                      height: "80px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                      marginBottom: "0.25rem",
+                    }}
+                  />
+                  <span style={{ fontSize: "0.75rem", textAlign: "center" }}>
+                    {exp.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         {/* Action Buttons */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+            marginTop: "1rem",
+          }}
+        >
           <button
             onClick={() => navigate("/")}
             style={{
