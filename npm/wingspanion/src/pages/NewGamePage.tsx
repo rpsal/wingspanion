@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { ExpansionId, InProgressGame } from "../domain/models";
+import type { ExpansionId, EndOfRoundGoalMode, InProgressGame } from "../domain/models";
 import { useAppState } from "../app/AppContext";
 import PlayerSelector from "../components/PlayerSelector";
 
@@ -19,6 +19,11 @@ const AVAILABLE_EXPANSIONS: { id: ExpansionId; label: string; image: string }[] 
   { id: "fanPack1", label: "Fan Pack 1", image: `${BASE}/expansions/fanPack1.png` },
 ];
 
+const GOAL_MODES: { id: EndOfRoundGoalMode; label: string; image: string }[] = [
+  { id: "green", label: "Majority per Item", image: `${BASE}/misc/goalGreen.png` },
+  { id: "blue", label: "One Point per Item", image: `${BASE}/misc/goalBlue.png` },
+];
+
 export default function NewGamePage() {
   const { players, draftGame, setDraftGame } = useAppState();
   const navigate = useNavigate();
@@ -31,6 +36,11 @@ export default function NewGamePage() {
   const [selectedExpansions, setSelectedExpansions] = useState<ExpansionId[]>(
     draftGame?.expansions ?? ["base"]
   );
+
+  const [selectedGoalMode, setSelectedGoalMode] = useState<EndOfRoundGoalMode>(
+    draftGame?.goalMode ?? "green"
+  );
+
 
   // Derived selected players
   const selectedPlayers = players.filter(p =>
@@ -65,6 +75,7 @@ export default function NewGamePage() {
       id: `game-${Date.now()}`,
       players: selectedPlayers,
       expansions: selectedExpansions,
+      goalMode: selectedGoalMode,
       startedAt: Date.now(),
       scores: {},
       currentCategoryId: "bird_scores",
@@ -107,19 +118,11 @@ export default function NewGamePage() {
           gap: "2rem",
         }}
       >
-        <h1 style={{ textAlign: "center" }}>New Game</h1>
-
         <PlayerSelector
           players={players}
           selectedPlayerIds={selectedPlayerIds}
           setSelectedPlayerIds={setSelectedPlayerIds}
         />
-
-        {selectedPlayers.length < 2 && (
-          <div style={{ fontSize: "0.85rem", color: "#c0392b", textAlign: "center" }}>
-            Select 2–5 players to start
-          </div>
-        )}
         
         <section style={{ textAlign: "center" }}>
           <h2>Select Expansions</h2>
@@ -162,6 +165,54 @@ export default function NewGamePage() {
                   />
                   <span style={{ fontSize: "0.75rem", textAlign: "center" }}>
                     {exp.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section style={{ textAlign: "center" }}>
+          <h2>End-of-Round Goal Scoring</h2>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "0.5rem",
+            }}
+          >
+            {GOAL_MODES.map(mode => {
+              const selected = selectedGoalMode === mode.id;
+              return (
+                <div
+                  key={mode.id}
+                  onClick={() => setSelectedGoalMode(mode.id)}
+                  style={{
+                    width: "100px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    border: selected ? "2px solid #4a7c59" : "1px solid #ccc",
+                    borderRadius: "8px",
+                    padding: "0.25rem",
+                    cursor: "pointer",
+                    backgroundColor: selected ? "#e0f8e0" : "white",
+                  }}
+                >
+                  <img
+                    src={mode.image}
+                    alt={mode.label}
+                    style={{
+                      width: "80px",
+                      height: "80px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                      marginBottom: "0.25rem",
+                    }}
+                  />
+                  <span style={{ fontSize: "0.75rem", textAlign: "center" }}>
+                    {mode.label}
                   </span>
                 </div>
               );

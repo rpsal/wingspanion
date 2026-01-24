@@ -86,6 +86,13 @@ export default function PlayerSelector({
     <section>
       <h2 style={{ textAlign: "center" }}>Select Players</h2>
 
+      {selectedPlayers.length < 2 && (
+          <div style={{ fontSize: "0.85rem", color: "#c0392b", textAlign: "center" }}>
+            Select 2–5 players to start
+            <p></p>
+          </div>
+        )}
+
       <div
         style={{
           display: "grid",

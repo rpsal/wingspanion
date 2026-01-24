@@ -11,6 +11,10 @@ export type ExpansionId =
   | "americas"
   | "fanPack1";
 
+export type EndOfRoundGoalMode = 
+  | "green"
+  | "blue"
+
 // Player and App Models
 
 export type PlayerProfile = {
@@ -56,6 +60,7 @@ export type InProgressGame = {
   id: string;
   players: PlayerSnapshot[];
   expansions: ExpansionId[];
+  goalMode: EndOfRoundGoalMode;
   startedAt: number;
   scores: Record<string, Record<string, number | null>>;
   currentCategoryId: string;
@@ -66,6 +71,7 @@ export type Game = {
   id: string;
   players: PlayerSnapshot[];
   expansions: ExpansionId[];
+  goalMode: EndOfRoundGoalMode;
   startedAt: number;
   endedAt: number;
   scores: Record<string, Record<string, number>>;
