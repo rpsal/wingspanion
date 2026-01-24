@@ -1,6 +1,24 @@
-export type EndOfRoundPlacement = 0 | 1 | 2 | 3;
 export type RoundNumber = 1 | 2 | 3 | 4;
 
+/**
+ * Placement according to Wingspan rules:
+ * 1 = first place
+ * 2 = second place
+ * 3 = third place
+ * 0 = did not qualify / no points
+ */
+export type EndOfRoundPlacement = 0 | 1 | 2 | 3;
+
+/**
+ * How end-of-round goals are scored
+ */
+export type EndOfRoundScoringMode =
+  | "numeric"   // players enter final points directly
+  | "ranked";   // players enter placements (1st / 2nd / etc.)
+
+/**
+ * Official Wingspan end-of-round scoring table
+ */
 export const END_OF_ROUND_POINTS_BY_ROUND: Record<
   RoundNumber,
   Record<EndOfRoundPlacement, number>
@@ -11,41 +29,85 @@ export const END_OF_ROUND_POINTS_BY_ROUND: Record<
   4: { 1: 7, 2: 4, 3: 3, 0: 0 },
 };
 
-export function resolveEndOfRoundScores(
+/**
+ * Numeric mode:
+ * The input already represents final points.
+ * No transformation required.
+ */
+export function scoreEndOfRoundNumeric(
+  values: number[]
+): number[] {
+  return [...values];
+}
+
+/**
+ * Ranked mode:
+ * Resolve placements into points using Wingspan tie rules.
+ */
+export function scoreEndOfRoundRanked(
   placements: EndOfRoundPlacement[],
   round: RoundNumber
 ): number[] {
-  const result = new Array<number>(placements.length).fill(0);
   const scoring = END_OF_ROUND_POINTS_BY_ROUND[round];
+  const result = new Array<number>(placements.length).fill(0);
 
+  // Group player indices by placement
   const groups = new Map<EndOfRoundPlacement, number[]>();
 
-  placements.forEach((p, i) => {
-    if (!groups.has(p)) groups.set(p, []);
-    groups.get(p)!.push(i);
+  placements.forEach((placement, index) => {
+    if (!groups.has(placement)) {
+      groups.set(placement, []);
+    }
+    groups.get(placement)!.push(index);
   });
 
-  const ordered: EndOfRoundPlacement[] = [1, 2, 3];
+  const orderedPlacements: EndOfRoundPlacement[] = [1, 2, 3];
 
-  for (let i = 0; i < ordered.length; i++) {
-    const placement = ordered[i];
-    const players = groups.get(placement);
-    if (!players || players.length === 0) continue;
+  for (let i = 0; i < orderedPlacements.length; i++) {
+    const placement = orderedPlacements[i];
+    const playersInGroup = groups.get(placement);
 
-    const tieSize = players.length;
-    let total = 0;
+    if (!playersInGroup || playersInGroup.length === 0) {
+      continue;
+    }
+
+    // Tie handling:
+    // Sum points for the occupied placements and divide evenly
+    const tieSize = playersInGroup.length;
+    let totalPoints = 0;
 
     for (let j = 0; j < tieSize; j++) {
-      const next = ordered[i + j];
-      if (next !== undefined) {
-        total += scoring[next];
+      const p = orderedPlacements[i + j];
+      if (p !== undefined) {
+        totalPoints += scoring[p];
       }
     }
 
-    const each = Math.floor(total / tieSize);
-    players.forEach((idx) => (result[idx] = each));
+    const pointsEach = Math.floor(totalPoints / tieSize);
+    playersInGroup.forEach(idx => {
+      result[idx] = pointsEach;
+    });
+
     i += tieSize - 1;
   }
 
   return result;
+}
+
+/**
+ * Unified entry point used by the app.
+ */
+export function resolveEndOfRoundScores(args: {
+  mode: EndOfRoundScoringMode;
+  values: number[] | EndOfRoundPlacement[];
+  round: RoundNumber;
+}): number[] {
+  if (args.mode === "numeric") {
+    return scoreEndOfRoundNumeric(args.values as number[]);
+  }
+
+  return scoreEndOfRoundRanked(
+    args.values as EndOfRoundPlacement[],
+    args.round
+  );
 }

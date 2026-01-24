@@ -7,19 +7,13 @@ export const BASE_CATEGORIES = [
   "tucked_cards",
 ] as const;
 
-export const OCEANIA_CATEGORIES = ["nectar_forest", "nectar_grassland", "nectar_wetland"] as const;
+export const OCEANIA_CATEGORIES = ["nectar_forest", "nectar_grassland", "nectar_wetland", "nectar_score"] as const;
 
 export const AMERICAS_CATEGORIES = ["hummingbird_scores"] as const;
 
-export type CategoryId =
-  | typeof BASE_CATEGORIES[number]
-  | typeof OCEANIA_CATEGORIES[number]
-  | typeof AMERICAS_CATEGORIES[number];
-
-export const SCORING_CATEGORIES: CategoryId[] = [
+export const INPUT_CATEGORIES = [
   "bird_scores",
   "bonus_cards",
-  "end_of_round_goals",
   "eggs",
   "cached_food",
   "tucked_cards",
@@ -27,7 +21,17 @@ export const SCORING_CATEGORIES: CategoryId[] = [
   "nectar_grassland",
   "nectar_wetland",
   "hummingbird_scores",
-];
+] as const;
+
+export const DERIVED_CATEGORIES = [
+  "end_of_round_goals",
+  "nectar_score",
+] as const;
+
+export type InputCategoryId = typeof INPUT_CATEGORIES[number];
+export type DerivedCategoryId = typeof DERIVED_CATEGORIES[number];
+
+export type CategoryId = InputCategoryId | DerivedCategoryId;
 
 export const CATEGORY_LABELS: Record<CategoryId, string> = {
   bird_scores: "Bird Scores",
@@ -39,5 +43,6 @@ export const CATEGORY_LABELS: Record<CategoryId, string> = {
   nectar_forest: "Nectar on Forest",
   nectar_grassland: "Nectar on Grassland",
   nectar_wetland: "Nectar on Wetland",
+  nectar_score: "Nectar Scores",
   hummingbird_scores: "Hummingbird Scores",
 };

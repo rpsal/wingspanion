@@ -1,6 +1,7 @@
 import type { CategoryId } from "./scoringCategories";
 import type { AvatarId } from "../domain/avatars";
 import type { PlayerColorId } from "./colors";
+import type { EndOfRoundPlacement } from "../domain/endOfRoundScoring";
 
 export type ExpansionId =
   | "base"
@@ -31,13 +32,19 @@ export type PlayerSnapshot = {
 
 // Scoring Models
 
-export type RoundPlacement = 1 | 2 | 3 | 4 | 0;
-
-export type EndOfRoundScores = {
-  rounds: RoundPlacement[];
+export type NumericScore = {
+  type: "numeric";
+  value: number;
 };
 
-export type ScoreValue = number | EndOfRoundScores;
+export type EndOfRoundScore = {
+  type: "endOfRound";
+  placements: EndOfRoundPlacement[];
+};
+
+export type ScoreValue =
+  | NumericScore
+  | EndOfRoundScore;
 
 export type PlayerScores = {
   [categoryId in CategoryId]?: ScoreValue;
