@@ -54,6 +54,8 @@ export default function ScoringPage() {
   const currentRound = rounds[roundIndex];
   const currentRoundLabel = roundIndex + 1;
 
+  const BASE = import.meta.env.BASE_URL;
+
   const isGreenEndOfRoundGoals =
     currentCategory === "end_of_round_goals" &&
     draftGame.goalMode === "green";
@@ -190,48 +192,55 @@ export default function ScoringPage() {
         textAlign: "center",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+        {/* Category Icon */}
+        <img
+          src={`${BASE}/misc/categories/${currentCategory}.webp`}
+          alt={CATEGORY_LABELS[currentCategory]}
+          style={{
+            width: "64px",
+            height: "64px",
+            objectFit: "contain", // ensures different sizes fit nicely
+          }}
+        />
+
+        {/* Category label */}
         <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>
           {CATEGORY_LABELS[currentCategory]}
         </div>
-        { isGreenEndOfRoundGoals ? 
-          (<h2 style={{ margin: 0, }}>ROUND {currentRoundLabel}</h2>) : 
-          (
+
+        {/* Player or round info */}
+        {isGreenEndOfRoundGoals ? (
+          <h2>ROUND {currentRoundLabel}</h2>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.75rem",
+            }}
+          >
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.75rem",
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                backgroundColor: PLAYER_COLORS[currentPlayer.colorId] ?? "#999",
+                border: "2px solid rgba(0,0,0,0.2)",
+                flexShrink: 0,
+              }}
+            />
+            <h2
+              style={{
+                margin: 0,
+                color: PLAYER_COLORS[currentPlayer.colorId] ?? "inherit",
               }}
             >
-              <div
-                style={{
-                  width: "20px",
-                  height: "20px",
-                  borderRadius: "50%",
-                  backgroundColor: PLAYER_COLORS[currentPlayer.colorId] ?? "#999",
-                  border: "2px solid rgba(0,0,0,0.2)",
-                  flexShrink: 0,
-                }}
-              />
-              <h2
-                style={{
-                  margin: 0,
-                  color: PLAYER_COLORS[currentPlayer.colorId] ?? "inherit",
-                }}
-              >
-                {currentPlayer.name}
-              </h2>
-            </div>
-          ) 
-        }
+              {currentPlayer.name}
+            </h2>
+          </div>
+        )}
       </div>
       
       { isGreenEndOfRoundGoals ? (
