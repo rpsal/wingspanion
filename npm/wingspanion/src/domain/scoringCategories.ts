@@ -44,6 +44,16 @@ export type RankedCategoryId = typeof RANKED_CATEGORIES[number];
 
 export type CategoryId = InputCategoryId | DerivedCategoryId | RankedCategoryId;
 
+export function getCategoriesForExpansions(expansions: string[]): string[] {
+  const categories: string[] = [...BASE_CATEGORIES];
+
+  if (expansions.includes("oceania")) categories.push(...OCEANIA_CATEGORIES);
+  if (expansions.includes("americas")) categories.push(...AMERICAS_CATEGORIES);
+
+  // Filter out derived categories
+  return categories.filter(cat => !DERIVED_CATEGORIES.includes(cat as DerivedCategoryId));
+}
+
 export const CATEGORY_LABELS: Record<CategoryId, string> = {
   bird_scores: "Bird Scores",
   bonus_cards: "Bonus Cards",
