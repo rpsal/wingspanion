@@ -7,7 +7,14 @@ export type RoundNumber = 1 | 2 | 3 | 4;
  * 3 = third place
  * 0 = did not qualify / no points
  */
-export type EndOfRoundPlacement = 0 | 1 | 2 | 3;
+export type Placement = 0 | 1 | 2 | 3;
+
+export type EndOfRoundPlacements = {
+  round1: Placement;
+  round2: Placement;
+  round3: Placement;
+  round4: Placement;
+};
 
 /**
  * How end-of-round goals are scored
@@ -21,7 +28,7 @@ export type EndOfRoundScoringMode =
  */
 export const END_OF_ROUND_POINTS_BY_ROUND: Record<
   RoundNumber,
-  Record<EndOfRoundPlacement, number>
+  Record<Placement, number>
 > = {
   1: { 1: 4, 2: 1, 3: 0, 0: 0 },
   2: { 1: 5, 2: 2, 3: 1, 0: 0 },
@@ -45,14 +52,14 @@ export function scoreEndOfRoundNumeric(
  * Resolve placements into points using Wingspan tie rules.
  */
 export function scoreEndOfRoundRanked(
-  placements: EndOfRoundPlacement[],
+  placements: Placement[],
   round: RoundNumber
 ): number[] {
   const scoring = END_OF_ROUND_POINTS_BY_ROUND[round];
   const result = new Array<number>(placements.length).fill(0);
 
   // Group player indices by placement
-  const groups = new Map<EndOfRoundPlacement, number[]>();
+  const groups = new Map<Placement, number[]>();
 
   placements.forEach((placement, index) => {
     if (!groups.has(placement)) {
@@ -61,7 +68,7 @@ export function scoreEndOfRoundRanked(
     groups.get(placement)!.push(index);
   });
 
-  const orderedPlacements: EndOfRoundPlacement[] = [1, 2, 3];
+  const orderedPlacements: Placement[] = [1, 2, 3];
 
   for (let i = 0; i < orderedPlacements.length; i++) {
     const placement = orderedPlacements[i];
@@ -99,7 +106,7 @@ export function scoreEndOfRoundRanked(
  */
 export function resolveEndOfRoundScores(args: {
   mode: EndOfRoundScoringMode;
-  values: number[] | EndOfRoundPlacement[];
+  values: number[] | Placement[];
   round: RoundNumber;
 }): number[] {
   if (args.mode === "numeric") {
@@ -107,7 +114,7 @@ export function resolveEndOfRoundScores(args: {
   }
 
   return scoreEndOfRoundRanked(
-    args.values as EndOfRoundPlacement[],
+    args.values as Placement[],
     args.round
   );
 }

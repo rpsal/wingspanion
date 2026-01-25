@@ -78,6 +78,7 @@ export default function NewGamePage() {
       goalMode: selectedGoalMode,
       startedAt: Date.now(),
       scores: {},
+      endOfRoundPlacements: {},
       currentCategoryId: "bird_scores",
       schemaVersion: 1,
     };

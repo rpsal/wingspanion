@@ -1,12 +1,12 @@
-import type { EndOfRoundPlacement } from "../domain/endOfRoundScoring";
+import type { Placement } from "../domain/endOfRoundScoring";
 
 type Props = {
-  value: EndOfRoundPlacement;
-  onChange: (value: EndOfRoundPlacement) => void;
+  value: Placement;
+  onChange: (value: Placement) => void;
   disabled?: boolean;
 };
 
-const OPTIONS: { value: EndOfRoundPlacement; label: string }[] = [
+const OPTIONS: { value: Placement; label: string }[] = [
   { value: 0, label: "—" },
   { value: 1, label: "1st" },
   { value: 2, label: "2nd" },
@@ -23,7 +23,7 @@ export default function PlacementSelector({
       value={value}
       disabled={disabled}
       onChange={(e) =>
-        onChange(Number(e.target.value) as EndOfRoundPlacement)
+        onChange(Number(e.target.value) as Placement)
       }
     >
       {OPTIONS.map((opt) => (

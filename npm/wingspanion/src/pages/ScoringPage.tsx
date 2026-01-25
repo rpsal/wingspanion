@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "../app/AppContext";
 import type { CategoryId } from "../domain/scoringCategories";
@@ -9,6 +9,7 @@ import {
   DERIVED_CATEGORIES,
   CATEGORY_LABELS,
 } from "../domain/scoringCategories";
+import type { Placement, EndOfRoundPlacements } from "../domain/endOfRoundScoring";
 
 export default function ScoringPage() {
   const { draftGame, setDraftGame } = useAppState();
@@ -31,11 +32,31 @@ export default function ScoringPage() {
     category => !DERIVED_CATEGORIES.includes(category as any)
   );
 
+  const rounds: (keyof EndOfRoundPlacements)[] = [
+    "round1",
+    "round2",
+    "round3",
+    "round4",
+  ];
+
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [playerIndex, setPlayerIndex] = useState(0);
+  const [roundIndex, setRoundIndex] = useState(0);
 
   const currentCategory = categories[categoryIndex];
   const currentPlayer = draftGame.players[playerIndex];
+  const currentRound = rounds[roundIndex];
+  const currentRoundLabel = roundIndex + 1;
+
+  const isGreenEndOfRoundGoals =
+    currentCategory === "end_of_round_goals" &&
+    draftGame.goalMode === "green";
+
+  const placementsForRound: Record<string, Placement> = {};
+  draftGame.players.forEach(p => {
+    placementsForRound[p.id] =
+      draftGame.endOfRoundPlacements?.[p.id]?.[currentRound] ?? 0;
+  });
 
   const currentScore =
     draftGame.scores[currentPlayer.id]?.[currentCategory] ?? "";
@@ -55,7 +76,46 @@ export default function ScoringPage() {
     setDraftGame(updatedDraft);
   };
 
+  // const currentPlacements: EndOfRoundPlacements =
+  //   draftGame.endOfRoundPlacements[currentPlayer.id] ?? {
+  //   round1: 0,
+  //   round2: 0,
+  //   round3: 0,
+  //   round4: 0,
+  // };
+
+  // const updatePlacement = (
+  //   playerId: string,
+  //   round: keyof EndOfRoundPlacements,
+  //   value: Placement
+  // ) => {
+  //   setDraftGame({
+  //     ...draftGame,
+  //     endOfRoundPlacements: {
+  //       ...draftGame.endOfRoundPlacements,
+  //       [playerId]: {
+  //         ...(draftGame.endOfRoundPlacements[playerId] ?? {
+  //           round1: 0,
+  //           round2: 0,
+  //           round3: 0,
+  //           round4: 0,
+  //         }),
+  //         [round]: value,
+  //       },
+  //     },
+  //   });
+  // };
+
   const goNext = () => {
+    if (isGreenEndOfRoundGoals) {
+      if (roundIndex < 3) {
+        setRoundIndex(r => r + 1);
+      } else {
+        setRoundIndex(0);
+        setCategoryIndex(c => c + 1);
+      }
+      return;
+    }
     if (playerIndex < draftGame.players.length - 1) {
       setPlayerIndex(playerIndex + 1);
     } else if (categoryIndex < categories.length - 1) {
@@ -67,6 +127,15 @@ export default function ScoringPage() {
   };
 
   const goBack = () => {
+    if (isGreenEndOfRoundGoals) {
+      if (roundIndex > 0) {
+        setRoundIndex(r => r - 1);
+      } else {
+        setRoundIndex(3);
+        setCategoryIndex(c => c - 1);
+      }
+      return;
+    }
     if (playerIndex > 0) {
       setPlayerIndex(playerIndex - 1);
     } else if (categoryIndex > 0) {
@@ -76,6 +145,15 @@ export default function ScoringPage() {
       navigate("/new-game");
     }
   };
+
+  useEffect(() => {
+    if (
+      currentCategory === "end_of_round_goals" &&
+      draftGame.goalMode === "green"
+    ) {
+      setRoundIndex(0);
+    }
+  }, [currentCategory, draftGame.goalMode]);
 
   return (
     <div
@@ -95,9 +173,15 @@ export default function ScoringPage() {
         <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>
           {CATEGORY_LABELS[currentCategory]}
         </div>
-        <h2>{currentPlayer.name}</h2>
+        { isGreenEndOfRoundGoals ? 
+          (<h2>ROUND {currentRoundLabel}</h2>) : 
+          (<h2>{currentPlayer.name}</h2>)
+        }
       </div>
-
+      
+      { isGreenEndOfRoundGoals ? (
+      <input></input>
+      ) : (
       <input
         type="number"
         min={0}
@@ -111,6 +195,7 @@ export default function ScoringPage() {
           border: "1px solid #ccc",
         }}
       />
+      )}
 
       {/* Buttons container */}
       <div
@@ -151,10 +236,16 @@ export default function ScoringPage() {
         </button>
       </div>
 
+      { isGreenEndOfRoundGoals ? (
+        <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
+          Category{" "}{categoryIndex + 1} of {categories.length}
+        </div>
+      ) : (
       <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
         Player {playerIndex + 1} of {draftGame.players.length} · Category{" "}
         {categoryIndex + 1} of {categories.length}
       </div>
+      )}
     </div>
   );
 }
