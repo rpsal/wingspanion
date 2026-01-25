@@ -7,9 +7,16 @@ export const BASE_CATEGORIES = [
   "tucked_cards",
 ] as const;
 
-export const OCEANIA_CATEGORIES = ["nectar_forest", "nectar_grassland", "nectar_wetland", "nectar_score"] as const;
+export const OCEANIA_CATEGORIES = [
+  "nectar_forest", 
+  "nectar_grassland", 
+  "nectar_wetland", 
+  "nectar_score"
+] as const;
 
-export const AMERICAS_CATEGORIES = ["hummingbird_scores"] as const;
+export const AMERICAS_CATEGORIES = [
+  "hummingbird_scores"
+] as const;
 
 export const INPUT_CATEGORIES = [
   "bird_scores",
@@ -23,15 +30,29 @@ export const INPUT_CATEGORIES = [
   "hummingbird_scores",
 ] as const;
 
-export const DERIVED_CATEGORIES = [
+export const RANKED_CATEGORIES = [
   "end_of_round_goals",
+] as const;
+
+export const DERIVED_CATEGORIES = [
   "nectar_score",
 ] as const;
 
 export type InputCategoryId = typeof INPUT_CATEGORIES[number];
 export type DerivedCategoryId = typeof DERIVED_CATEGORIES[number];
+export type RankedCategoryId = typeof RANKED_CATEGORIES[number];
 
-export type CategoryId = InputCategoryId | DerivedCategoryId;
+export type CategoryId = InputCategoryId | DerivedCategoryId | RankedCategoryId;
+
+export function getCategoriesForExpansions(expansions: string[]): string[] {
+  const categories: string[] = [...BASE_CATEGORIES];
+
+  if (expansions.includes("oceania")) categories.push(...OCEANIA_CATEGORIES);
+  if (expansions.includes("americas")) categories.push(...AMERICAS_CATEGORIES);
+
+  // Filter out derived categories
+  return categories.filter(cat => !DERIVED_CATEGORIES.includes(cat as DerivedCategoryId));
+}
 
 export const CATEGORY_LABELS: Record<CategoryId, string> = {
   bird_scores: "Bird Scores",

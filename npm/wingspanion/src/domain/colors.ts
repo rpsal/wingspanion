@@ -14,7 +14,7 @@ export const PLAYER_COLORS: Record<PlayerColorId, string> = {
   yellow: "#f1c40f",
   purple: "#8e44ad",
   black: "#2d3436",
-  white: "#bdc3c7", // silver
+  white: "#bdc3c7",
 };
 
 export const PLAYER_COLOR_IDS: PlayerColorId[] = Object.keys(PLAYER_COLORS) as PlayerColorId[];

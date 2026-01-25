@@ -1,7 +1,7 @@
 import type { CategoryId } from "./scoringCategories";
 import type { AvatarId } from "../domain/avatars";
 import type { PlayerColorId } from "./colors";
-import type { EndOfRoundPlacement } from "../domain/endOfRoundScoring";
+import type { Placement, EndOfRoundPlacements } from "../domain/endOfRoundScoring";
 
 export type ExpansionId =
   | "base"
@@ -31,7 +31,8 @@ export type AppSettings = {
 export type PlayerSnapshot = {
   id: string;
   name: string;
-  color?: string;
+  colorId: PlayerColorId;
+  avatarId: AvatarId;
 };
 
 // Scoring Models
@@ -43,7 +44,7 @@ export type NumericScore = {
 
 export type EndOfRoundScore = {
   type: "endOfRound";
-  placements: EndOfRoundPlacement[];
+  placements: Placement[];
 };
 
 export type ScoreValue =
@@ -63,6 +64,7 @@ export type InProgressGame = {
   goalMode: EndOfRoundGoalMode;
   startedAt: number;
   scores: Record<string, Record<string, number | null>>;
+  endOfRoundPlacements: Record<string, EndOfRoundPlacements>;
   currentCategoryId: string;
   schemaVersion: number;
 };

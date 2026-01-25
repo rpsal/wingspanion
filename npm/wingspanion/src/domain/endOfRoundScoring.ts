@@ -7,7 +7,95 @@ export type RoundNumber = 1 | 2 | 3 | 4;
  * 3 = third place
  * 0 = did not qualify / no points
  */
-export type EndOfRoundPlacement = 0 | 1 | 2 | 3;
+export type Placement = 0 | 1 | 2 | 3;
+
+export type EndOfRoundPlacements = {
+  round1: Placement;
+  round2: Placement;
+  round3: Placement;
+  round4: Placement;
+};
+
+export function isRoundPlacementValid(
+  placements: Record<string, Placement>
+): boolean {
+  const values = Object.values(placements).filter(p => p !== 0);
+
+  // Everyone "--" is valid
+  if (values.length === 0) return true;
+
+  const c1 = values.filter(p => p === 1).length;
+  const c2 = values.filter(p => p === 2).length;
+  const c3 = values.filter(p => p === 3).length;
+
+  // If anyone is placed, there must be at least one 1st
+  if (c1 === 0) return false;
+
+  // No 2nd if 2+ firsts
+  if (c1 >= 2 && c2 > 0) return false;
+
+  // No 3rd unless at least 2 players are ahead
+  if (c1 + c2 < 2 && c3 > 0) return false;
+
+  return true;
+}
+
+const ALL_PLACEMENTS: Placement[] = [1, 2, 3, 0];
+
+export function getValidPlacements(
+  placements: Record<string, Placement>,
+  currentPlayerId: string,
+  totalPlayers: number
+): Placement[] {
+  const counts = { 1: 0, 2: 0, 3: 0 };
+
+  Object.entries(placements).forEach(([pid, place]) => {
+    if (pid === currentPlayerId) return;
+    if (place !== 0) counts[place]++;
+  });
+
+  const valid = new Set<Placement>();
+
+  // "--" always allowed
+  valid.add(0);
+
+  // 1st always allowed
+  valid.add(1);
+
+  // 2nd allowed only if fewer than 2 players are already 1st
+  if (counts[1] < 2) {
+    valid.add(2);
+  }
+
+  // 3rd allowed only if total podium slots are not exceeded
+  const podiumCount = counts[1] + counts[2] + counts[3];
+  if (podiumCount < totalPlayers && counts[1] + counts[2] < 3) {
+    valid.add(3);
+  }
+
+  return ALL_PLACEMENTS.filter(p => valid.has(p));
+}
+
+export function normalizePlacementsForRound(
+  placements: Record<string, Placement>,
+  totalPlayers: number
+): Record<string, Placement> {
+  const normalized = { ...placements };
+
+  Object.keys(normalized).forEach(playerId => {
+    const validOptions = getValidPlacements(
+      normalized,
+      playerId,
+      totalPlayers
+    );
+
+    if (!validOptions.includes(normalized[playerId])) {
+      normalized[playerId] = 0; // reset to "--"
+    }
+  });
+
+  return normalized;
+}
 
 /**
  * How end-of-round goals are scored
@@ -21,7 +109,7 @@ export type EndOfRoundScoringMode =
  */
 export const END_OF_ROUND_POINTS_BY_ROUND: Record<
   RoundNumber,
-  Record<EndOfRoundPlacement, number>
+  Record<Placement, number>
 > = {
   1: { 1: 4, 2: 1, 3: 0, 0: 0 },
   2: { 1: 5, 2: 2, 3: 1, 0: 0 },
@@ -45,14 +133,14 @@ export function scoreEndOfRoundNumeric(
  * Resolve placements into points using Wingspan tie rules.
  */
 export function scoreEndOfRoundRanked(
-  placements: EndOfRoundPlacement[],
+  placements: Placement[],
   round: RoundNumber
 ): number[] {
   const scoring = END_OF_ROUND_POINTS_BY_ROUND[round];
   const result = new Array<number>(placements.length).fill(0);
 
   // Group player indices by placement
-  const groups = new Map<EndOfRoundPlacement, number[]>();
+  const groups = new Map<Placement, number[]>();
 
   placements.forEach((placement, index) => {
     if (!groups.has(placement)) {
@@ -61,7 +149,7 @@ export function scoreEndOfRoundRanked(
     groups.get(placement)!.push(index);
   });
 
-  const orderedPlacements: EndOfRoundPlacement[] = [1, 2, 3];
+  const orderedPlacements: Placement[] = [1, 2, 3];
 
   for (let i = 0; i < orderedPlacements.length; i++) {
     const placement = orderedPlacements[i];
@@ -99,7 +187,7 @@ export function scoreEndOfRoundRanked(
  */
 export function resolveEndOfRoundScores(args: {
   mode: EndOfRoundScoringMode;
-  values: number[] | EndOfRoundPlacement[];
+  values: number[] | Placement[];
   round: RoundNumber;
 }): number[] {
   if (args.mode === "numeric") {
@@ -107,7 +195,7 @@ export function resolveEndOfRoundScores(args: {
   }
 
   return scoreEndOfRoundRanked(
-    args.values as EndOfRoundPlacement[],
+    args.values as Placement[],
     args.round
   );
 }

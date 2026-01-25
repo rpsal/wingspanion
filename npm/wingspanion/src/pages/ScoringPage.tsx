@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "../app/AppContext";
 import type { CategoryId } from "../domain/scoringCategories";
@@ -6,8 +6,16 @@ import {
   BASE_CATEGORIES,
   OCEANIA_CATEGORIES,
   AMERICAS_CATEGORIES,
+  DERIVED_CATEGORIES,
   CATEGORY_LABELS,
 } from "../domain/scoringCategories";
+import type { Placement, EndOfRoundPlacements } from "../domain/endOfRoundScoring";
+import { 
+  isRoundPlacementValid, 
+  getValidPlacements, 
+  normalizePlacementsForRound 
+} from "../domain/endOfRoundScoring";
+import { PLAYER_COLORS } from "../domain/colors";
 
 export default function ScoringPage() {
   const { draftGame, setDraftGame } = useAppState();
@@ -23,15 +31,44 @@ export default function ScoringPage() {
   }
 
   // Build category list based on expansions
-  const categories: CategoryId[] = [...BASE_CATEGORIES];
-  if (draftGame.expansions.includes("oceania")) categories.push(...OCEANIA_CATEGORIES);
-  if (draftGame.expansions.includes("americas")) categories.push(...AMERICAS_CATEGORIES);
+  const allCategories: CategoryId[] = [...BASE_CATEGORIES];
+  if (draftGame.expansions.includes("oceania")) allCategories.push(...OCEANIA_CATEGORIES);
+  if (draftGame.expansions.includes("americas")) allCategories.push(...AMERICAS_CATEGORIES);
+  const categories = allCategories.filter(
+    category => !DERIVED_CATEGORIES.includes(category as any)
+  );
+
+  const rounds: (keyof EndOfRoundPlacements)[] = [
+    "round1",
+    "round2",
+    "round3",
+    "round4",
+  ];
 
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [playerIndex, setPlayerIndex] = useState(0);
+  const [roundIndex, setRoundIndex] = useState(0);
 
   const currentCategory = categories[categoryIndex];
   const currentPlayer = draftGame.players[playerIndex];
+  const currentRound = rounds[roundIndex];
+  const currentRoundLabel = roundIndex + 1;
+
+  const BASE = import.meta.env.BASE_URL;
+
+  const isGreenEndOfRoundGoals =
+    currentCategory === "end_of_round_goals" &&
+    draftGame.goalMode === "green";
+
+  const placementsForRound: Record<string, Placement> = {};
+  draftGame.players.forEach(p => {
+    placementsForRound[p.id] =
+      draftGame.endOfRoundPlacements?.[p.id]?.[currentRound] ?? 0;
+  });
+
+  const isRoundValid =
+    isGreenEndOfRoundGoals &&
+    isRoundPlacementValid(placementsForRound);
 
   const currentScore =
     draftGame.scores[currentPlayer.id]?.[currentCategory] ?? "";
@@ -51,7 +88,57 @@ export default function ScoringPage() {
     setDraftGame(updatedDraft);
   };
 
+  const updatePlacement = (
+    playerId: string,
+    round: keyof EndOfRoundPlacements,
+    value: Placement
+  ) => {
+    const roundPlacements: Record<string, Placement> = {};
+
+    draftGame.players.forEach(player => {
+      roundPlacements[player.id] =
+        draftGame.endOfRoundPlacements[player.id]?.[round] ?? 0;
+    });
+
+    roundPlacements[playerId] = value;
+
+    const normalizedRound = normalizePlacementsForRound(
+      roundPlacements,
+      draftGame.players.length
+    );
+
+    const updatedEndOfRoundPlacements = {
+      ...draftGame.endOfRoundPlacements,
+    };
+
+    draftGame.players.forEach(player => {
+      updatedEndOfRoundPlacements[player.id] = {
+        ...(updatedEndOfRoundPlacements[player.id] ?? {
+          round1: 0,
+          round2: 0,
+          round3: 0,
+          round4: 0,
+        }),
+        [round]: normalizedRound[player.id],
+      };
+    });
+
+    setDraftGame({
+      ...draftGame,
+      endOfRoundPlacements: updatedEndOfRoundPlacements,
+    });
+  };
+
   const goNext = () => {
+    if (isGreenEndOfRoundGoals) {
+      if (roundIndex < 3) {
+        setRoundIndex(r => r + 1);
+      } else {
+        setRoundIndex(0);
+        setCategoryIndex(c => c + 1);
+      }
+      return;
+    }
     if (playerIndex < draftGame.players.length - 1) {
       setPlayerIndex(playerIndex + 1);
     } else if (categoryIndex < categories.length - 1) {
@@ -63,6 +150,15 @@ export default function ScoringPage() {
   };
 
   const goBack = () => {
+    if (isGreenEndOfRoundGoals) {
+      if (roundIndex > 0) {
+        setRoundIndex(r => r - 1);
+      } else {
+        setRoundIndex(3);
+        setCategoryIndex(c => c - 1);
+      }
+      return;
+    }
     if (playerIndex > 0) {
       setPlayerIndex(playerIndex - 1);
     } else if (categoryIndex > 0) {
@@ -72,6 +168,15 @@ export default function ScoringPage() {
       navigate("/new-game");
     }
   };
+
+  useEffect(() => {
+    if (
+      currentCategory === "end_of_round_goals" &&
+      draftGame.goalMode === "green"
+    ) {
+      setRoundIndex(0);
+    }
+  }, [currentCategory, draftGame.goalMode]);
 
   return (
     <div
@@ -87,13 +192,131 @@ export default function ScoringPage() {
         textAlign: "center",
       }}
     >
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+        {/* Category Icon */}
+        <img
+          src={`${BASE}/misc/categories/${currentCategory}.webp`}
+          alt={CATEGORY_LABELS[currentCategory]}
+          style={{
+            width: "64px",
+            height: "64px",
+            objectFit: "contain", // ensures different sizes fit nicely
+          }}
+        />
+
+        {/* Category label */}
         <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>
           {CATEGORY_LABELS[currentCategory]}
         </div>
-        <h2>{currentPlayer.name}</h2>
-      </div>
 
+        {/* Player or round info */}
+        {isGreenEndOfRoundGoals ? (
+          <h2>ROUND {currentRoundLabel}</h2>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.75rem",
+            }}
+          >
+            <div
+              style={{
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                backgroundColor: PLAYER_COLORS[currentPlayer.colorId] ?? "#999",
+                border: "2px solid rgba(0,0,0,0.2)",
+                flexShrink: 0,
+              }}
+            />
+            <h2
+              style={{
+                margin: 0,
+                color: PLAYER_COLORS[currentPlayer.colorId] ?? "inherit",
+              }}
+            >
+              {currentPlayer.name}
+            </h2>
+          </div>
+        )}
+      </div>
+      
+      { isGreenEndOfRoundGoals ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        
+        { draftGame.players.map(player => {
+          const validOptions = getValidPlacements(
+            placementsForRound,
+            player.id,
+            draftGame.players.length
+          );
+
+          const roundKey = `round${roundIndex + 1}` as keyof EndOfRoundPlacements;
+
+          return (
+            <div
+              key={player.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <div
+                  style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    backgroundColor: PLAYER_COLORS[player.colorId] ?? "#999",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    color: PLAYER_COLORS[player.colorId] ?? "#999",
+                    fontWeight: 500,
+                  }}
+                >
+                  {player.name}
+                </span>
+              </div>
+
+              <select
+                value={placementsForRound[player.id] ?? ""}
+                onChange={e =>
+                  updatePlacement(
+                    player.id,
+                    roundKey,
+                    e.target.value === "" ? 0 : Number(e.target.value) as Placement
+                  )
+                }
+              >
+                {validOptions.map(opt => (
+                  <option key={opt ?? "0"} value={opt ?? ""}>
+                    {opt === 0
+                      ? "--"
+                      : opt === 1
+                      ? "1st"
+                      : opt === 2
+                      ? "2nd"
+                      : "3rd"}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
+        </div>
+      ) : (
       <input
         type="number"
         min={0}
@@ -107,6 +330,12 @@ export default function ScoringPage() {
           border: "1px solid #ccc",
         }}
       />
+      )}
+      { isGreenEndOfRoundGoals && !isRoundValid && (
+        <div style={{ fontSize: "0.8rem", color: "#c0392b" }}>
+          Each round must have at least one 1st place, and placements must be valid.
+        </div>
+      )}
 
       {/* Buttons container */}
       <div
@@ -133,6 +362,7 @@ export default function ScoringPage() {
 
         <button
           onClick={goNext}
+          disabled={isGreenEndOfRoundGoals && !isRoundValid}
           style={{
             flex: 1,
             padding: "0.75rem",
@@ -147,10 +377,16 @@ export default function ScoringPage() {
         </button>
       </div>
 
+      { isGreenEndOfRoundGoals ? (
+        <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
+          Category{" "}{categoryIndex + 1} of {categories.length}
+        </div>
+      ) : (
       <div style={{ fontSize: "0.8rem", opacity: 0.6 }}>
         Player {playerIndex + 1} of {draftGame.players.length} · Category{" "}
         {categoryIndex + 1} of {categories.length}
       </div>
+      )}
     </div>
   );
 }

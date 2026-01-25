@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { ExpansionId, EndOfRoundGoalMode, InProgressGame } from "../domain/models";
 import { useAppState } from "../app/AppContext";
 import PlayerSelector from "../components/PlayerSelector";
+import { getCategoriesForExpansions } from "../domain/scoringCategories";
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 5;
@@ -41,6 +42,14 @@ export default function NewGamePage() {
     draftGame?.goalMode ?? "green"
   );
 
+  // State of the game
+  const initialPlayerIds = draftGame?.players.map(p => p.id) ?? [];
+  const initialExpansions = draftGame?.expansions ?? ["base"];
+  const playersChanged = 
+      selectedPlayerIds.sort().join(",") !== initialPlayerIds.sort().join(",");
+  const expansionsChanged =
+      selectedExpansions.sort().join(",") !== initialExpansions.sort().join(",");
+
 
   // Derived selected players
   const selectedPlayers = players.filter(p =>
@@ -65,24 +74,61 @@ export default function NewGamePage() {
 
   const startGame = async () => {
     if (selectedPlayers.length === 0) return;
-    if (
-      !selectedExpansions.includes("base") &&
-      !selectedExpansions.includes("asia")
-    )
-      return;
+    if (!selectedExpansions.includes("base") && !selectedExpansions.includes("asia")) return;
 
-    const newDraft: InProgressGame = {
-      id: `game-${Date.now()}`,
-      players: selectedPlayers,
-      expansions: selectedExpansions,
-      goalMode: selectedGoalMode,
-      startedAt: Date.now(),
-      scores: {},
-      currentCategoryId: "bird_scores",
-      schemaVersion: 1,
-    };
+    const initialCategories = getCategoriesForExpansions(selectedExpansions);
 
-    await setDraftGame(newDraft);
+    if (playersChanged || !draftGame) {
+      // Clear draft and initialize scores for all categories
+      const initialScores: Record<string, Record<string, number>> = {};
+      selectedPlayers.forEach(player => {
+        initialScores[player.id] = {};
+        initialCategories.forEach(cat => {
+          initialScores[player.id][cat] = 0;
+        });
+      });
+
+      const newDraft: InProgressGame = {
+        id: `game-${Date.now()}`,
+        players: selectedPlayers,
+        expansions: selectedExpansions,
+        goalMode: selectedGoalMode,
+        startedAt: Date.now(),
+        scores: initialScores,
+        endOfRoundPlacements: {},
+        currentCategoryId: "bird_scores",
+        schemaVersion: 1,
+      };
+
+      await setDraftGame(newDraft);
+
+    } else if (expansionsChanged && draftGame) {
+      // Keep existing scores, zero newly added categories
+      const newScores = { ...draftGame.scores };
+
+      initialCategories.forEach(cat => {
+        draftGame.players.forEach(player => {
+          if (!newScores[player.id]) newScores[player.id] = {};
+          // Only zero if the player doesn't already have a score for this category
+          if (!(cat in newScores[player.id])) {
+            newScores[player.id][cat] = 0;
+          }
+        });
+      });
+
+      const updatedDraft: InProgressGame = {
+        ...draftGame,
+        expansions: selectedExpansions,
+        scores: newScores,
+      };
+
+      await setDraftGame(updatedDraft);
+
+    } else if (draftGame) {
+      // Nothing changed, continue existing game
+      await setDraftGame(draftGame);
+    }
+
     navigate("/score");
   };
 
@@ -97,6 +143,13 @@ export default function NewGamePage() {
     selectedPlayers.length > MAX_PLAYERS ||
     (!selectedExpansions.includes("base") &&
       !selectedExpansions.includes("asia"));
+
+  const startButtonLabel = (() => {
+    if (!draftGame) return "Start Game";
+    if (playersChanged) return "Start Game";
+    if (!playersChanged && !expansionsChanged) return "Continue Game";
+    return "Start Game";
+  })();
 
   return (
     <div
@@ -253,7 +306,7 @@ export default function NewGamePage() {
               cursor: isStartDisabled ? "not-allowed" : "pointer",
             }}
           >
-            Start Game
+            {startButtonLabel}
           </button>
 
           <button
@@ -268,7 +321,7 @@ export default function NewGamePage() {
               cursor: "pointer",
             }}
           >
-            Clear Draft
+            Reset Game
           </button>
         </div>
 
