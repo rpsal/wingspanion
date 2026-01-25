@@ -84,27 +84,50 @@ export default function ScoringPage() {
   //   round4: 0,
   // };
 
-  // const updatePlacement = (
-  //   playerId: string,
-  //   round: keyof EndOfRoundPlacements,
-  //   value: Placement
-  // ) => {
-  //   setDraftGame({
-  //     ...draftGame,
-  //     endOfRoundPlacements: {
-  //       ...draftGame.endOfRoundPlacements,
-  //       [playerId]: {
-  //         ...(draftGame.endOfRoundPlacements[playerId] ?? {
-  //           round1: 0,
-  //           round2: 0,
-  //           round3: 0,
-  //           round4: 0,
-  //         }),
-  //         [round]: value,
-  //       },
-  //     },
-  //   });
-  // };
+  const updatePlacement = (
+    playerId: string,
+    round: keyof EndOfRoundPlacements,
+    value: Placement
+  ) => {
+    setDraftGame({
+      ...draftGame,
+      endOfRoundPlacements: {
+        ...draftGame.endOfRoundPlacements,
+        [playerId]: {
+          ...(draftGame.endOfRoundPlacements[playerId] ?? {
+            round1: 0,
+            round2: 0,
+            round3: 0,
+            round4: 0,
+          }),
+          [round]: value,
+        },
+      },
+    });
+  };
+
+  const ALL_PLACEMENTS: Placement[] = [1, 2, 3, 0];
+
+  function getValidPlacements(
+    placements: Record<string, Placement>,
+    currentPlayerId: string
+  ): Placement[] {
+    const counts = { 1: 0, 2: 0, 3: 0 };
+
+    Object.entries(placements).forEach(([pid, place]) => {
+      if (pid === currentPlayerId) return;
+      if (place != 0) counts[place]++;
+    });
+
+    const valid = new Set<Placement>();
+    valid.add(0);   // "--" always allowed
+    valid.add(1);   // 1st always allowed
+
+    if (counts[1] < 2) valid.add(2);
+    if (counts[1] + counts[2] < 3) valid.add(3);
+
+    return ALL_PLACEMENTS.filter(p => valid.has(p));
+  }
 
   const goNext = () => {
     if (isGreenEndOfRoundGoals) {
@@ -175,12 +198,58 @@ export default function ScoringPage() {
         </div>
         { isGreenEndOfRoundGoals ? 
           (<h2>ROUND {currentRoundLabel}</h2>) : 
-          (<h2>{currentPlayer.name}</h2>)
+          (<h2>{currentPlayer.name}</h2>) 
         }
       </div>
       
       { isGreenEndOfRoundGoals ? (
-      <input></input>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        
+        { draftGame.players.map(player => {
+          const validOptions = getValidPlacements(
+            placementsForRound,
+            player.id
+          );
+
+          const roundKey = `round${roundIndex + 1}` as keyof EndOfRoundPlacements;
+
+          return (
+            <div
+              key={player.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>{player.name}</span>
+
+              <select
+                value={placementsForRound[player.id] ?? ""}
+                onChange={e =>
+                  updatePlacement(
+                    player.id,
+                    roundKey,
+                    e.target.value === "" ? 0 : Number(e.target.value) as Placement
+                  )
+                }
+              >
+                {validOptions.map(opt => (
+                  <option key={opt ?? "0"} value={opt ?? ""}>
+                    {opt === 0
+                      ? "--"
+                      : opt === 1
+                      ? "1st"
+                      : opt === 2
+                      ? "2nd"
+                      : "3rd"}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
+        </div>
       ) : (
       <input
         type="number"
