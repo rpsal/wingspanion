@@ -6,6 +6,7 @@ import {
   BASE_CATEGORIES,
   OCEANIA_CATEGORIES,
   AMERICAS_CATEGORIES,
+  DERIVED_CATEGORIES,
   CATEGORY_LABELS,
 } from "../domain/scoringCategories";
 
@@ -23,9 +24,12 @@ export default function ScoringPage() {
   }
 
   // Build category list based on expansions
-  const categories: CategoryId[] = [...BASE_CATEGORIES];
-  if (draftGame.expansions.includes("oceania")) categories.push(...OCEANIA_CATEGORIES);
-  if (draftGame.expansions.includes("americas")) categories.push(...AMERICAS_CATEGORIES);
+  const allCategories: CategoryId[] = [...BASE_CATEGORIES];
+  if (draftGame.expansions.includes("oceania")) allCategories.push(...OCEANIA_CATEGORIES);
+  if (draftGame.expansions.includes("americas")) allCategories.push(...AMERICAS_CATEGORIES);
+  const categories = allCategories.filter(
+    category => !DERIVED_CATEGORIES.includes(category as any)
+  );
 
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [playerIndex, setPlayerIndex] = useState(0);
