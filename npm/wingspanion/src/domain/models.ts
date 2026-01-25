@@ -31,7 +31,8 @@ export type AppSettings = {
 export type PlayerSnapshot = {
   id: string;
   name: string;
-  color?: string;
+  colorId: PlayerColorId;
+  avatarId: AvatarId;
 };
 
 // Scoring Models

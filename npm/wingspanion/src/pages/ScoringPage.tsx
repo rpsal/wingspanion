@@ -10,6 +10,7 @@ import {
   CATEGORY_LABELS,
 } from "../domain/scoringCategories";
 import type { Placement, EndOfRoundPlacements } from "../domain/endOfRoundScoring";
+import { PLAYER_COLORS } from "../domain/colors";
 
 export default function ScoringPage() {
   const { draftGame, setDraftGame } = useAppState();
@@ -192,13 +193,47 @@ export default function ScoringPage() {
         textAlign: "center",
       }}
     >
-      <div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+        }}
+      >
         <div style={{ fontSize: "0.9rem", opacity: 0.7 }}>
           {CATEGORY_LABELS[currentCategory]}
         </div>
         { isGreenEndOfRoundGoals ? 
           (<h2>ROUND {currentRoundLabel}</h2>) : 
-          (<h2>{currentPlayer.name}</h2>) 
+          (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.75rem",
+              }}
+            >
+              <div
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "50%",
+                  backgroundColor: PLAYER_COLORS[currentPlayer.colorId] ?? "#999",
+                  border: "2px solid rgba(0,0,0,0.2)",
+                  flexShrink: 0,
+                }}
+              />
+              <h2
+                style={{
+                  margin: 0,
+                  color: PLAYER_COLORS[currentPlayer.colorId] ?? "inherit",
+                }}
+              >
+                {currentPlayer.name}
+              </h2>
+            </div>
+          ) 
         }
       </div>
       
@@ -222,7 +257,31 @@ export default function ScoringPage() {
                 alignItems: "center",
               }}
             >
-              <span>{player.name}</span>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                <div
+                  style={{
+                    width: "12px",
+                    height: "12px",
+                    borderRadius: "50%",
+                    backgroundColor: PLAYER_COLORS[player.colorId] ?? "#999",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    color: PLAYER_COLORS[player.colorId] ?? "#999",
+                    fontWeight: 500,
+                  }}
+                >
+                  {player.name}
+                </span>
+              </div>
 
               <select
                 value={placementsForRound[player.id] ?? ""}
