@@ -16,6 +16,87 @@ export type EndOfRoundPlacements = {
   round4: Placement;
 };
 
+export function isRoundPlacementValid(
+  placements: Record<string, Placement>
+): boolean {
+  const values = Object.values(placements).filter(p => p !== 0);
+
+  // Everyone "--" is valid
+  if (values.length === 0) return true;
+
+  const c1 = values.filter(p => p === 1).length;
+  const c2 = values.filter(p => p === 2).length;
+  const c3 = values.filter(p => p === 3).length;
+
+  // If anyone is placed, there must be at least one 1st
+  if (c1 === 0) return false;
+
+  // No 2nd if 2+ firsts
+  if (c1 >= 2 && c2 > 0) return false;
+
+  // No 3rd unless at least 2 players are ahead
+  if (c1 + c2 < 2 && c3 > 0) return false;
+
+  return true;
+}
+
+const ALL_PLACEMENTS: Placement[] = [1, 2, 3, 0];
+
+export function getValidPlacements(
+  placements: Record<string, Placement>,
+  currentPlayerId: string,
+  totalPlayers: number
+): Placement[] {
+  const counts = { 1: 0, 2: 0, 3: 0 };
+
+  Object.entries(placements).forEach(([pid, place]) => {
+    if (pid === currentPlayerId) return;
+    if (place !== 0) counts[place]++;
+  });
+
+  const valid = new Set<Placement>();
+
+  // "--" always allowed
+  valid.add(0);
+
+  // 1st always allowed
+  valid.add(1);
+
+  // 2nd allowed only if fewer than 2 players are already 1st
+  if (counts[1] < 2) {
+    valid.add(2);
+  }
+
+  // 3rd allowed only if total podium slots are not exceeded
+  const podiumCount = counts[1] + counts[2] + counts[3];
+  if (podiumCount < totalPlayers && counts[1] + counts[2] < 3) {
+    valid.add(3);
+  }
+
+  return ALL_PLACEMENTS.filter(p => valid.has(p));
+}
+
+export function normalizePlacementsForRound(
+  placements: Record<string, Placement>,
+  totalPlayers: number
+): Record<string, Placement> {
+  const normalized = { ...placements };
+
+  Object.keys(normalized).forEach(playerId => {
+    const validOptions = getValidPlacements(
+      normalized,
+      playerId,
+      totalPlayers
+    );
+
+    if (!validOptions.includes(normalized[playerId])) {
+      normalized[playerId] = 0; // reset to "--"
+    }
+  });
+
+  return normalized;
+}
+
 /**
  * How end-of-round goals are scored
  */

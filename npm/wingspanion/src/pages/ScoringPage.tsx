@@ -10,6 +10,11 @@ import {
   CATEGORY_LABELS,
 } from "../domain/scoringCategories";
 import type { Placement, EndOfRoundPlacements } from "../domain/endOfRoundScoring";
+import { 
+  isRoundPlacementValid, 
+  getValidPlacements, 
+  normalizePlacementsForRound 
+} from "../domain/endOfRoundScoring";
 import { PLAYER_COLORS } from "../domain/colors";
 
 export default function ScoringPage() {
@@ -59,6 +64,10 @@ export default function ScoringPage() {
       draftGame.endOfRoundPlacements?.[p.id]?.[currentRound] ?? 0;
   });
 
+  const isRoundValid =
+    isGreenEndOfRoundGoals &&
+    isRoundPlacementValid(placementsForRound);
+
   const currentScore =
     draftGame.scores[currentPlayer.id]?.[currentCategory] ?? "";
 
@@ -77,58 +86,46 @@ export default function ScoringPage() {
     setDraftGame(updatedDraft);
   };
 
-  // const currentPlacements: EndOfRoundPlacements =
-  //   draftGame.endOfRoundPlacements[currentPlayer.id] ?? {
-  //   round1: 0,
-  //   round2: 0,
-  //   round3: 0,
-  //   round4: 0,
-  // };
-
   const updatePlacement = (
     playerId: string,
     round: keyof EndOfRoundPlacements,
     value: Placement
   ) => {
+    const roundPlacements: Record<string, Placement> = {};
+
+    draftGame.players.forEach(player => {
+      roundPlacements[player.id] =
+        draftGame.endOfRoundPlacements[player.id]?.[round] ?? 0;
+    });
+
+    roundPlacements[playerId] = value;
+
+    const normalizedRound = normalizePlacementsForRound(
+      roundPlacements,
+      draftGame.players.length
+    );
+
+    const updatedEndOfRoundPlacements = {
+      ...draftGame.endOfRoundPlacements,
+    };
+
+    draftGame.players.forEach(player => {
+      updatedEndOfRoundPlacements[player.id] = {
+        ...(updatedEndOfRoundPlacements[player.id] ?? {
+          round1: 0,
+          round2: 0,
+          round3: 0,
+          round4: 0,
+        }),
+        [round]: normalizedRound[player.id],
+      };
+    });
+
     setDraftGame({
       ...draftGame,
-      endOfRoundPlacements: {
-        ...draftGame.endOfRoundPlacements,
-        [playerId]: {
-          ...(draftGame.endOfRoundPlacements[playerId] ?? {
-            round1: 0,
-            round2: 0,
-            round3: 0,
-            round4: 0,
-          }),
-          [round]: value,
-        },
-      },
+      endOfRoundPlacements: updatedEndOfRoundPlacements,
     });
   };
-
-  const ALL_PLACEMENTS: Placement[] = [1, 2, 3, 0];
-
-  function getValidPlacements(
-    placements: Record<string, Placement>,
-    currentPlayerId: string
-  ): Placement[] {
-    const counts = { 1: 0, 2: 0, 3: 0 };
-
-    Object.entries(placements).forEach(([pid, place]) => {
-      if (pid === currentPlayerId) return;
-      if (place != 0) counts[place]++;
-    });
-
-    const valid = new Set<Placement>();
-    valid.add(0);   // "--" always allowed
-    valid.add(1);   // 1st always allowed
-
-    if (counts[1] < 2) valid.add(2);
-    if (counts[1] + counts[2] < 3) valid.add(3);
-
-    return ALL_PLACEMENTS.filter(p => valid.has(p));
-  }
 
   const goNext = () => {
     if (isGreenEndOfRoundGoals) {
@@ -204,7 +201,7 @@ export default function ScoringPage() {
           {CATEGORY_LABELS[currentCategory]}
         </div>
         { isGreenEndOfRoundGoals ? 
-          (<h2>ROUND {currentRoundLabel}</h2>) : 
+          (<h2 style={{ margin: 0, }}>ROUND {currentRoundLabel}</h2>) : 
           (
             <div
               style={{
@@ -243,7 +240,8 @@ export default function ScoringPage() {
         { draftGame.players.map(player => {
           const validOptions = getValidPlacements(
             placementsForRound,
-            player.id
+            player.id,
+            draftGame.players.length
           );
 
           const roundKey = `round${roundIndex + 1}` as keyof EndOfRoundPlacements;
@@ -324,6 +322,11 @@ export default function ScoringPage() {
         }}
       />
       )}
+      { isGreenEndOfRoundGoals && !isRoundValid && (
+        <div style={{ fontSize: "0.8rem", color: "#c0392b" }}>
+          Each round must have at least one 1st place, and placements must be valid.
+        </div>
+      )}
 
       {/* Buttons container */}
       <div
@@ -350,6 +353,7 @@ export default function ScoringPage() {
 
         <button
           onClick={goNext}
+          disabled={isGreenEndOfRoundGoals && !isRoundValid}
           style={{
             flex: 1,
             padding: "0.75rem",
