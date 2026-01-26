@@ -262,43 +262,59 @@ export default function ScoringPage() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                gap: "1.25rem",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "0.5rem",
+                  gap: "0.75rem",
+                  minWidth: 0,
                 }}
               >
+                {/* Player color */}
                 <div
                   style={{
-                    width: "12px",
-                    height: "12px",
+                    width: "22px",
+                    height: "22px",
                     borderRadius: "50%",
                     backgroundColor: PLAYER_COLORS[player.colorId] ?? "#999",
+                    border: "2px solid rgba(0, 0, 0, 0.25)",
                     flexShrink: 0,
                   }}
                 />
+                {/* Player name */}
                 <span
                   style={{
-                    color: PLAYER_COLORS[player.colorId] ?? "#999",
-                    fontWeight: 500,
+                    fontSize: "1.3rem",
+                    fontWeight: 600,
+                    color: PLAYER_COLORS[player.colorId] ?? "inherit",
                   }}
                 >
                   {player.name}
                 </span>
               </div>
 
+              {/* Placement dropdown */}
               <select
                 value={placementsForRound[player.id] ?? ""}
                 onChange={e =>
                   updatePlacement(
                     player.id,
                     roundKey,
-                    e.target.value === "" ? 0 : Number(e.target.value) as Placement
+                    e.target.value === "" ? 0 : (Number(e.target.value) as Placement)
                   )
                 }
+                style={{
+                  fontSize: "1.2rem",
+                  padding: "0.5rem 0.75rem",
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                  minWidth: "6rem",
+                  textAlign: "center",
+                  backgroundColor: "white",
+                }}
               >
                 {validOptions.map(opt => (
                   <option key={opt ?? "0"} value={opt ?? ""}>
