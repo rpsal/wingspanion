@@ -1,3 +1,17 @@
+export const ALL_CATEGORIES = [
+  "bird_scores",
+  "bonus_cards",
+  "end_of_round_goals",
+  "eggs",
+  "cached_food",
+  "tucked_cards",
+  "nectar_forest", 
+  "nectar_grassland", 
+  "nectar_wetland", 
+  "nectar_score",
+  "hummingbird_scores"
+] as const;
+
 export const BASE_CATEGORIES = [
   "bird_scores",
   "bonus_cards",
