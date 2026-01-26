@@ -17,6 +17,19 @@ import {
 } from "../domain/endOfRoundScoring";
 import { PLAYER_COLORS } from "../domain/colors";
 
+const stepButtonStyle: React.CSSProperties = {
+  width: "56px",
+  height: "56px",
+  fontSize: "2rem",
+  fontWeight: 600,
+  borderRadius: "12px",
+  border: "1px solid #ccc",
+  backgroundColor: "#f5f5f5",
+  cursor: "pointer",
+  touchAction: "manipulation",
+  userSelect: "none",
+};
+
 export default function ScoringPage() {
   const { draftGame, setDraftGame } = useAppState();
   const navigate = useNavigate();
@@ -71,7 +84,7 @@ export default function ScoringPage() {
     isRoundPlacementValid(placementsForRound);
 
   const currentScore =
-    draftGame.scores[currentPlayer.id]?.[currentCategory] ?? "";
+    draftGame.scores[currentPlayer.id]?.[currentCategory] ?? 0;
 
   const updateScore = (value: number) => {
     const updatedDraft = {
@@ -333,19 +346,53 @@ export default function ScoringPage() {
         })}
         </div>
       ) : (
-      <input
-        type="number"
-        min={0}
-        value={currentScore}
-        onChange={e => updateScore(parseInt(e.target.value) || 0)}
-        style={{
-          fontSize: "2rem",
-          textAlign: "center",
-          padding: "0.75rem",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
-        }}
-      />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            maxWidth: "420px",
+            margin: "0 auto",
+            gap: "1rem",
+          }}
+        >
+          <button
+            onClick={() => updateScore(Math.max(0, currentScore-10))}
+            style={stepButtonStyle}
+          >
+            &lt;&lt;
+          </button>
+          <button
+            onClick={() => updateScore(Math.max(0, currentScore-1))}
+            style={stepButtonStyle}
+          >
+            &lt;
+          </button>
+          <div
+            style={{
+              flex: 1,
+              fontSize: "3rem",
+              fontWeight: 700,
+              textAlign: "center",
+              userSelect: "none",
+            }}
+          >
+            {currentScore}
+          </div>
+          <button
+            onClick={() => updateScore(currentScore+1)}
+            style={stepButtonStyle}
+          >
+            &gt;
+          </button>
+          <button
+            onClick={() => updateScore(currentScore+10)}
+            style={stepButtonStyle}
+          >
+            &gt;&gt;
+          </button>
+        </div>
       )}
       { isGreenEndOfRoundGoals && !isRoundValid && (
         <div style={{ fontSize: "0.8rem", color: "#c0392b" }}>
