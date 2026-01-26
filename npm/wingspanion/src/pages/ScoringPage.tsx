@@ -358,13 +358,13 @@ export default function ScoringPage() {
           }}
         >
           <button
-            onClick={() => updateScore(Math.max(0, currentScore-10))}
+            onClick={() => updateScore(currentScore-10)}
             style={stepButtonStyle}
           >
             &lt;&lt;
           </button>
           <button
-            onClick={() => updateScore(Math.max(0, currentScore-1))}
+            onClick={() => updateScore(currentScore-1)}
             style={stepButtonStyle}
           >
             &lt;
