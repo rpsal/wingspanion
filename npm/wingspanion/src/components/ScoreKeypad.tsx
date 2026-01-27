@@ -3,14 +3,15 @@ import React from "react";
 /* CSS Styles */
 const sheetStyle: React.CSSProperties = {
   position: "fixed",
+  bottom: 0,
   left: 0,
   right: 0,
-  bottom: 0,
-  background: "#f9f9f9",
+  backgroundColor: "#f9f9f9",
   borderTopLeftRadius: "16px",
   borderTopRightRadius: "16px",
-  boxShadow: "0 -8px 24px rgba(0,0,0,0.15)",
   padding: "1rem",
+  zIndex: 1001,
+  boxShadow: "0 -4px 20px rgba(0,0,0,0.25)",
   paddingBottom: "calc(1rem + env(safe-area-inset-bottom))",
   maxWidth: "520px",
   margin: "0 auto",
@@ -122,35 +123,39 @@ export function ScoreKeypad({
   };
 
   return (
-    <div style={sheetStyle}>
-      <div style={displayStyle}>{value || "0"}</div>
+    <>
+        <div style={backdropStyle} onClick={onCancel} />
 
-      <div style={gridStyle}>
-        {["1","2","3","4","5","6","7","8","9","-","0","←"].map(k => (
-          <button
-            key={k}
-            onClick={() => press(k)}
-            style={keyStyle}
-          >
-            {k}
-          </button>
-        ))}
-      </div>
+        <div style={sheetStyle}>
+        <div style={displayStyle}>{value || "0"}</div>
 
-      <div style={actionBarStyle}>
-        <button
-            style={cancelButtonStyle}
-            onClick={onCancel}
-        >
-        Cancel
-        </button>
-        <button
-            style={confirmButtonStyle}
-            onClick={() => onConfirm(Number(value || 0))}
-        >
-        OK
-        </button>
-      </div>
-    </div>
+        <div style={gridStyle}>
+            {["1","2","3","4","5","6","7","8","9","C","0","←"].map(k => (
+            <button
+                key={k}
+                onClick={() => press(k)}
+                style={keyStyle}
+            >
+                {k}
+            </button>
+            ))}
+        </div>
+
+        <div style={actionBarStyle}>
+            <button
+                style={cancelButtonStyle}
+                onClick={onCancel}
+            >
+            Cancel
+            </button>
+            <button
+                style={confirmButtonStyle}
+                onClick={() => onConfirm(Number(value || 0))}
+            >
+            OK
+            </button>
+        </div>
+        </div>
+    </>
   );
 }
