@@ -1,7 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { useAppState } from "../app/AppContext";
-import { CATEGORY_LABELS, BASE_CATEGORIES, OCEANIA_CATEGORIES, AMERICAS_CATEGORIES } from "../domain/scoringCategories";
+import {
+  CATEGORY_LABELS,
+  BASE_CATEGORIES,
+  OCEANIA_CATEGORIES,
+  AMERICAS_CATEGORIES,
+} from "../domain/scoringCategories";
+import { PLAYER_COLORS } from "../domain/colors";
 import type { CategoryId } from "../domain/scoringCategories";
+
+const BASE = import.meta.env.BASE_URL;
+const CATEGORY_ICON_SIZE = 28;
 
 export default function ResultsPage() {
   const { draftGame, setDraftGame } = useAppState();
@@ -18,114 +27,262 @@ export default function ResultsPage() {
 
   const players = draftGame.players;
 
-  // Build category list based on expansions
+  // Categories
   const categories: CategoryId[] = [...BASE_CATEGORIES];
   if (draftGame.expansions.includes("oceania")) categories.push(...OCEANIA_CATEGORIES);
   if (draftGame.expansions.includes("americas")) categories.push(...AMERICAS_CATEGORIES);
 
-  // Compute total score per player
+  // Totals
   const totalScores: Record<string, number> = {};
   players.forEach(p => {
     const scores = draftGame.scores[p.id] ?? {};
-    totalScores[p.id] = categories.reduce((sum, cat) => sum + (scores[cat] ?? 0), 0);
+    totalScores[p.id] = categories.reduce(
+      (sum, cat) => sum + (scores[cat] ?? 0),
+      0
+    );
   });
 
-  // Sort players by total score descending
-  const rankedPlayers = [...players].sort((a, b) => (totalScores[b.id] ?? 0) - (totalScores[a.id] ?? 0));
+  const maxScore = Math.max(...Object.values(totalScores));
+  const winners = new Set(
+    players.filter(p => totalScores[p.id] === maxScore).map(p => p.id)
+  );
+
+  const ordinal = (n: number) =>
+    n === 1 ? "1st" : n === 2 ? "2nd" : n === 3 ? "3rd" : `${n}th`;
+
+  // Placements with ties
+  const sorted = [...players].sort(
+    (a, b) => totalScores[b.id] - totalScores[a.id]
+  );
+
+  const placements: Record<string, number> = {};
+  let place = 1;
+  sorted.forEach((p, i) => {
+    if (i > 0 && totalScores[p.id] < totalScores[sorted[i - 1].id]) {
+      place = i + 1;
+    }
+    placements[p.id] = place;
+  });
 
   return (
     <div
       style={{
         minHeight: "100vh",
+        padding: "1.25rem 0.75rem",
+        backgroundColor: "#fafafa",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-start",
-        padding: "2rem 1rem",
-        maxWidth: "480px",
-        margin: "0 auto",
-        gap: "1.5rem",
-        textAlign: "center",
-        backgroundColor: "#fafafa",
+        gap: "1.25rem",
       }}
     >
-      <h1>Game Results</h1>
+      <h1
+        style={{
+          textAlign: "center",
+          fontSize: "1.4rem",
+        }}
+      >
+        Game Results
+      </h1>
 
-      {/* Vertical table: rows = categories, columns = players */}
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={{ borderBottom: "2px solid #ccc", padding: "0.5rem", textAlign: "left" }}>Category</th>
-            {players.map(p => (
+      {/* Table */}
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            minWidth: "520px",
+            fontSize: "1rem",
+          }}
+        >
+          <thead>
+            <tr>
               <th
-                key={p.id}
                 style={{
-                  borderBottom: "2px solid #ccc",
-                  padding: "0.5rem",
+                  position: "sticky",
+                  left: 0,
+                  background: "#fafafa",
+                }}
+              />
+              {players.map(p => {
+                const isWinner = winners.has(p.id);
+                return (
+                  <th
+                    key={p.id}
+                    style={{
+                      padding: "0.75rem 0.5rem",
+                      backgroundColor: isWinner ? "#fff6d6" : undefined,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "0.35rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: "50%",
+                          backgroundColor: PLAYER_COLORS[p.colorId],
+                          border: "1px solid rgba(0,0,0,0.3)",
+                        }}
+                      />
+                      <span
+                        style={{
+                          color: PLAYER_COLORS[p.colorId],
+                          fontWeight: 600,
+                          fontSize: "0.95rem",
+                        }}
+                      >
+                        {p.name}
+                      </span>
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+
+          <tbody>
+            {categories.map(cat => (
+              <tr key={cat}>
+                <td
+                  style={{
+                    position: "sticky",
+                    left: 0,
+                    background: "#fafafa",
+                    padding: "0.6rem",
+                    textAlign: "center",
+                  }}
+                >
+                  <img
+                    src={`${BASE}/misc/categories/${cat}.webp`}
+                    alt={CATEGORY_LABELS[cat]}
+                    width={CATEGORY_ICON_SIZE}
+                    height={CATEGORY_ICON_SIZE}
+                    style={{ objectFit: "contain" }}
+                  />
+                </td>
+                {players.map(p => {
+                  const isWinner = winners.has(p.id);
+                  return (
+                    <td
+                      key={p.id}
+                      style={{
+                        padding: "0.6rem",
+                        textAlign: "center",
+                        backgroundColor: isWinner ? "#fff6d6" : undefined,
+                      }}
+                    >
+                      {draftGame.scores[p.id]?.[cat] ?? 0}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+
+            {/* Total */}
+            <tr>
+              <td
+                style={{
+                  position: "sticky",
+                  left: 0,
+                  background: "#fafafa",
+                  fontWeight: 700,
+                  padding: "0.6rem",
                   textAlign: "center",
-                  minWidth: "60px",
                 }}
               >
-                {p.name}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {categories.map(cat => (
-            <tr key={cat}>
-              <td style={{ padding: "0.5rem", fontWeight: "bold" }}>{CATEGORY_LABELS[cat]}</td>
+                Σ
+              </td>
               {players.map(p => {
-                const score = draftGame.scores[p.id]?.[cat] ?? 0;
+                const isWinner = winners.has(p.id);
                 return (
-                  <td key={p.id} style={{ padding: "0.5rem", textAlign: "center" }}>
-                    {score}
+                  <td
+                    key={p.id}
+                    style={{
+                      fontWeight: 700,
+                      textAlign: "center",
+                      backgroundColor: isWinner ? "#fff6d6" : undefined,
+                    }}
+                  >
+                    {totalScores[p.id]}
                   </td>
                 );
               })}
             </tr>
-          ))}
 
-          {/* Total scores row */}
-          <tr>
-            <td style={{ padding: "0.5rem", fontWeight: "bold" }}>Total</td>
-            {players.map(p => (
-              <td key={p.id} style={{ padding: "0.5rem", fontWeight: "bold", textAlign: "center" }}>
-                {totalScores[p.id]}
+            {/* Placement */}
+            <tr>
+              <td
+                style={{
+                  position: "sticky",
+                  left: 0,
+                  background: "#fafafa",
+                  fontWeight: 600,
+                  padding: "0.6rem",
+                  textAlign: "center",
+                }}
+              >
+                Place
               </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-
-      {/* Final ranking */}
-      <div style={{ marginTop: "1.5rem", fontSize: "1.1rem" }}>
-        <strong>Final Ranking:</strong>{" "}
-        {rankedPlayers.map((p, i) => (
-          <span key={p.id}>
-            {i + 1}{i === 0 ? "st" : i === 1 ? "nd" : i === 2 ? "rd" : "th"}: {p.name}
-            {i < rankedPlayers.length - 1 ? ", " : ""}
-          </span>
-        ))}
+              {players.map(p => {
+                const isWinner = winners.has(p.id);
+                return (
+                  <td
+                    key={p.id}
+                    style={{
+                      fontWeight: 600,
+                      textAlign: "center",
+                      backgroundColor: isWinner ? "#fff6d6" : undefined,
+                    }}
+                  >
+                    {ordinal(placements[p.id])}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      {/* New Game button */}
-      <button
-        style={{
-          marginTop: "2rem",
-          padding: "0.75rem",
-          backgroundColor: "#c0392b",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          fontSize: "1rem",
-        }}
-        onClick={() => {
-          setDraftGame(null);
-          navigate("/new-game");
-        }}
-      >
-        New Game
-      </button>
+      {/* Actions */}
+      <div style={{ display: "flex", gap: "0.75rem" }}>
+        <button
+          onClick={() => navigate("/score")}
+          style={{
+            flex: 1,
+            padding: "0.85rem",
+            fontSize: "1rem",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: "#aaa",
+          }}
+        >
+          Back to Scoring
+        </button>
+
+        <button
+          onClick={() => {
+            setDraftGame(null);
+            navigate("/new-game");
+          }}
+          style={{
+            flex: 1,
+            padding: "0.85rem",
+            fontSize: "1rem",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: "#c0392b",
+            color: "white",
+          }}
+        >
+          New Game
+        </button>
+      </div>
     </div>
   );
 }

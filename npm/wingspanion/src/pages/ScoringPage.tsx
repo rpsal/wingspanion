@@ -16,6 +16,21 @@ import {
   normalizePlacementsForRound 
 } from "../domain/endOfRoundScoring";
 import { PLAYER_COLORS } from "../domain/colors";
+import { ScoreStepper } from "../components/ScoreStepper";
+import { ScoreKeypad } from "../components/ScoreKeypad";
+
+// const stepButtonStyle: React.CSSProperties = {
+//   width: "56px",
+//   height: "56px",
+//   fontSize: "2rem",
+//   fontWeight: 600,
+//   borderRadius: "12px",
+//   border: "1px solid #ccc",
+//   backgroundColor: "#f5f5f5",
+//   cursor: "pointer",
+//   touchAction: "manipulation",
+//   userSelect: "none",
+// };
 
 export default function ScoringPage() {
   const { draftGame, setDraftGame } = useAppState();
@@ -48,6 +63,7 @@ export default function ScoringPage() {
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [playerIndex, setPlayerIndex] = useState(0);
   const [roundIndex, setRoundIndex] = useState(0);
+  const [editingScore, setEditingScore] = useState<number | null>(null);
 
   const currentCategory = categories[categoryIndex];
   const currentPlayer = draftGame.players[playerIndex];
@@ -71,7 +87,7 @@ export default function ScoringPage() {
     isRoundPlacementValid(placementsForRound);
 
   const currentScore =
-    draftGame.scores[currentPlayer.id]?.[currentCategory] ?? "";
+    draftGame.scores[currentPlayer.id]?.[currentCategory] ?? 0;
 
   const updateScore = (value: number) => {
     const updatedDraft = {
@@ -262,43 +278,59 @@ export default function ScoringPage() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                gap: "1.25rem",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "0.5rem",
+                  gap: "0.75rem",
+                  minWidth: 0,
                 }}
               >
+                {/* Player color */}
                 <div
                   style={{
-                    width: "12px",
-                    height: "12px",
+                    width: "22px",
+                    height: "22px",
                     borderRadius: "50%",
                     backgroundColor: PLAYER_COLORS[player.colorId] ?? "#999",
+                    border: "2px solid rgba(0, 0, 0, 0.25)",
                     flexShrink: 0,
                   }}
                 />
+                {/* Player name */}
                 <span
                   style={{
-                    color: PLAYER_COLORS[player.colorId] ?? "#999",
-                    fontWeight: 500,
+                    fontSize: "1.3rem",
+                    fontWeight: 600,
+                    color: PLAYER_COLORS[player.colorId] ?? "inherit",
                   }}
                 >
                   {player.name}
                 </span>
               </div>
 
+              {/* Placement dropdown */}
               <select
                 value={placementsForRound[player.id] ?? ""}
                 onChange={e =>
                   updatePlacement(
                     player.id,
                     roundKey,
-                    e.target.value === "" ? 0 : Number(e.target.value) as Placement
+                    e.target.value === "" ? 0 : (Number(e.target.value) as Placement)
                   )
                 }
+                style={{
+                  fontSize: "1.2rem",
+                  padding: "0.5rem 0.75rem",
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                  minWidth: "6rem",
+                  textAlign: "center",
+                  backgroundColor: "white",
+                }}
               >
                 {validOptions.map(opt => (
                   <option key={opt ?? "0"} value={opt ?? ""}>
@@ -317,19 +349,34 @@ export default function ScoringPage() {
         })}
         </div>
       ) : (
-      <input
-        type="number"
-        min={0}
-        value={currentScore}
-        onChange={e => updateScore(parseInt(e.target.value) || 0)}
-        style={{
-          fontSize: "2rem",
-          textAlign: "center",
-          padding: "0.75rem",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
-        }}
-      />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            maxWidth: "420px",
+            margin: "0 auto",
+            gap: "1rem",
+          }}
+        >
+          <ScoreStepper
+            value={currentScore}
+            onChange={updateScore}
+          onDirectInput={() => setEditingScore(currentScore)}
+          />
+
+          {editingScore !== null && (
+            <ScoreKeypad
+              initialValue={editingScore}
+              onCancel={() => setEditingScore(null)}
+              onConfirm={val => {
+                updateScore(val);
+                setEditingScore(null);
+              }}
+            />
+          )}
+        </div>
       )}
       { isGreenEndOfRoundGoals && !isRoundValid && (
         <div style={{ fontSize: "0.8rem", color: "#c0392b" }}>

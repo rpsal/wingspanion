@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import type { ExpansionId, EndOfRoundGoalMode, InProgressGame } from "../domain/models";
 import { useAppState } from "../app/AppContext";
 import PlayerSelector from "../components/PlayerSelector";
-import { getCategoriesForExpansions } from "../domain/scoringCategories";
+import { getCategoriesForExpansions, ALL_CATEGORIES } from "../domain/scoringCategories";
+import { preloadCategoryIcons } from "../domain/icons";
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 5;
@@ -63,6 +64,12 @@ export default function NewGamePage() {
       setSelectedExpansions(["base"]);
     }
   }, [draftGame]);
+
+  // Preload category icons
+  const categories = [...ALL_CATEGORIES]
+  useEffect(() => {
+    preloadCategoryIcons(categories);
+  }, [categories]);
 
   const toggleExpansion = (expId: ExpansionId) => {
     setSelectedExpansions(prev =>
