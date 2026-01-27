@@ -16,19 +16,21 @@ import {
   normalizePlacementsForRound 
 } from "../domain/endOfRoundScoring";
 import { PLAYER_COLORS } from "../domain/colors";
+import { ScoreStepper } from "../components/ScoreStepper";
+import { ScoreKeypad } from "../components/ScoreKeypad";
 
-const stepButtonStyle: React.CSSProperties = {
-  width: "56px",
-  height: "56px",
-  fontSize: "2rem",
-  fontWeight: 600,
-  borderRadius: "12px",
-  border: "1px solid #ccc",
-  backgroundColor: "#f5f5f5",
-  cursor: "pointer",
-  touchAction: "manipulation",
-  userSelect: "none",
-};
+// const stepButtonStyle: React.CSSProperties = {
+//   width: "56px",
+//   height: "56px",
+//   fontSize: "2rem",
+//   fontWeight: 600,
+//   borderRadius: "12px",
+//   border: "1px solid #ccc",
+//   backgroundColor: "#f5f5f5",
+//   cursor: "pointer",
+//   touchAction: "manipulation",
+//   userSelect: "none",
+// };
 
 export default function ScoringPage() {
   const { draftGame, setDraftGame } = useAppState();
@@ -61,6 +63,7 @@ export default function ScoringPage() {
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [playerIndex, setPlayerIndex] = useState(0);
   const [roundIndex, setRoundIndex] = useState(0);
+  const [editingScore, setEditingScore] = useState<number | null>(null);
 
   const currentCategory = categories[categoryIndex];
   const currentPlayer = draftGame.players[playerIndex];
@@ -357,41 +360,22 @@ export default function ScoringPage() {
             gap: "1rem",
           }}
         >
-          <button
-            onClick={() => updateScore(currentScore-10)}
-            style={stepButtonStyle}
-          >
-            &lt;&lt;
-          </button>
-          <button
-            onClick={() => updateScore(currentScore-1)}
-            style={stepButtonStyle}
-          >
-            &lt;
-          </button>
-          <div
-            style={{
-              flex: 1,
-              fontSize: "3rem",
-              fontWeight: 700,
-              textAlign: "center",
-              userSelect: "none",
-            }}
-          >
-            {currentScore}
-          </div>
-          <button
-            onClick={() => updateScore(currentScore+1)}
-            style={stepButtonStyle}
-          >
-            &gt;
-          </button>
-          <button
-            onClick={() => updateScore(currentScore+10)}
-            style={stepButtonStyle}
-          >
-            &gt;&gt;
-          </button>
+          <ScoreStepper
+            value={currentScore}
+            onChange={updateScore}
+          onDirectInput={() => setEditingScore(currentScore)}
+          />
+
+          {editingScore !== null && (
+            <ScoreKeypad
+              initialValue={editingScore}
+              onCancel={() => setEditingScore(null)}
+              onConfirm={val => {
+                updateScore(val);
+                setEditingScore(null);
+              }}
+            />
+          )}
         </div>
       )}
       { isGreenEndOfRoundGoals && !isRoundValid && (
