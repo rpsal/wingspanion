@@ -13,6 +13,8 @@ const buttonStyle: React.CSSProperties = {
   background: "#fff",
   touchAction: "none",
   userSelect: "none",
+  WebkitUserSelect: "none",
+  WebkitTouchCallout: "none",
 };
 
 const valueStyle: React.CSSProperties = {
@@ -56,8 +58,8 @@ export function ScoreStepper({
     //playSound();
   };
 
-  const inc = useLongPressStepper(() => applyDelta(step), +1);
-  const dec = useLongPressStepper(() => applyDelta(-step), -1);
+  const inc = useLongPressStepper(() => applyDelta(step));
+  const dec = useLongPressStepper(() => applyDelta(-step));
 
   return (
     <div
@@ -69,12 +71,14 @@ export function ScoreStepper({
         width: "100%",
         maxWidth: "360px",
         margin: "0 auto",
+        touchAction: "none",
       }}
     >
       <button
         disabled={disabled || value <= min}
         onClick={() => onChange(value - fastStep)}
         style={buttonStyle}
+        tabIndex={-1}
       >
         &lt;&lt;
       </button>
@@ -83,6 +87,7 @@ export function ScoreStepper({
         disabled={disabled || value <= min}
         aria-label="Decrease score"
         style={buttonStyle}
+        tabIndex={-1}
       >
         &lt;
       </button>
@@ -99,6 +104,7 @@ export function ScoreStepper({
         disabled={disabled || value >= max}
         aria-label="Increase score"
         style={buttonStyle}
+        tabIndex={-1}
       >
         &gt;
       </button>
@@ -106,6 +112,7 @@ export function ScoreStepper({
         disabled={disabled || value >= max}
         onClick={() => onChange(value + fastStep)}
         style={buttonStyle}
+        tabIndex={-1}
       >
         &gt;&gt;
       </button>

@@ -1,8 +1,8 @@
 import { useRef } from "react";
 
-type StepFn = (delta: number) => void;
+type StepFn = () => void;
 
-export function useLongPressStepper(stepFn: StepFn, delta: number) {
+export function useLongPressStepper(stepFn: StepFn) {
   const timeoutRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
 
@@ -13,23 +13,19 @@ export function useLongPressStepper(stepFn: StepFn, delta: number) {
     intervalRef.current = null;
   };
 
-  const start = () => {
-    stepFn(delta);
+  const start = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+
+    stepFn();
 
     timeoutRef.current = window.setTimeout(() => {
-      let interval = 120;
+      intervalRef.current = window.setInterval(stepFn, 120);
 
-      intervalRef.current = window.setInterval(() => {
-        stepFn(delta);
-      }, interval);
-
-      // Accelerate after 1.5s
       window.setTimeout(() => {
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
-          intervalRef.current = window.setInterval(() => {
-            stepFn(delta);
-          }, 60);
+          intervalRef.current = window.setInterval(stepFn, 60);
         }
       }, 1500);
     }, 300);
