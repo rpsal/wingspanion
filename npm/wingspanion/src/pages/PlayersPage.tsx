@@ -15,13 +15,16 @@ export default function PlayersPage() {
   const [colorId, setColorId] = useState<PlayerColorId>("blue");
   const [avatarId, setAvatarId] = useState<AvatarId>("bird1");
 
+  const generateId = () =>
+    crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+  
   const addPlayer = () => {
     if (!name.trim()) return;
 
     setPlayers([
       ...players,
       {
-        id: crypto.randomUUID(),
+        id: generateId(),
         name: name.trim(),
         colorId,
         avatarId,
