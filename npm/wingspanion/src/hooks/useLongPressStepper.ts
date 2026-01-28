@@ -1,31 +1,44 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 type StepFn = () => void;
 
 export function useLongPressStepper(stepFn: StepFn) {
+  const stepRef = useRef(stepFn);
   const timeoutRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
 
+  useEffect(() => {
+    stepRef.current = stepFn;
+  }, [stepFn]);
+
   const clearTimers = () => {
-    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    if (intervalRef.current) window.clearInterval(intervalRef.current);
-    timeoutRef.current = null;
-    intervalRef.current = null;
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   const start = (e: React.PointerEvent) => {
     e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
+    e.stopPropagation();
 
-    stepFn();
+    stepRef.current();
 
     timeoutRef.current = window.setTimeout(() => {
-      intervalRef.current = window.setInterval(stepFn, 120);
+      intervalRef.current = window.setInterval(() => {
+        stepRef.current();
+      }, 120);
 
       window.setTimeout(() => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = window.setInterval(stepFn, 60);
+        if (intervalRef.current !== null) {
+          window.clearInterval(intervalRef.current);
+          intervalRef.current = window.setInterval(() => {
+            stepRef.current();
+          }, 60);
         }
       }, 1500);
     }, 300);
@@ -34,6 +47,8 @@ export function useLongPressStepper(stepFn: StepFn) {
   const stop = () => {
     clearTimers();
   };
+
+  useEffect(() => clearTimers, []);
 
   return {
     onPointerDown: start,

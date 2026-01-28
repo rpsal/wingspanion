@@ -22,6 +22,7 @@ const valueStyle: React.CSSProperties = {
   textAlign: "center",
   fontSize: "2.5rem",
   fontWeight: 600,
+  userSelect: "none",
 };
 
 type ScoreStepperProps = {
